@@ -13,3 +13,15 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+.gradle/
+build/
+captures/
+local.properties
+.DS_Store
+
+# Archivos de log
+*.log
