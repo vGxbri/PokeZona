@@ -11,33 +11,47 @@ import kotlinx.coroutines.launch
 
 class GamesViewModel : ViewModel() {
 
-    // Aquí guardaremos la lista de juegos. Empieza vacía.
     private val _games = MutableStateFlow<List<GameResult>>(emptyList())
     val games: StateFlow<List<GameResult>> = _games.asStateFlow()
 
-    // Para saber si está cargando y mostrar una ruedita de carga en la pantalla
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    // Lista exacta de las versiones de la saga principal (como las llama la PokéAPI)
+    private val mainSeriesGames = listOf(
+        "red", "blue", "yellow",
+        "gold", "silver", "crystal",
+        "ruby", "sapphire", "emerald", "firered", "leafgreen",
+        "diamond", "pearl", "platinum", "heartgold", "soulsilver",
+        "black", "white", "black-2", "white-2",
+        "x", "y", "omega-ruby", "alpha-sapphire",
+        "sun", "moon", "ultra-sun", "ultra-moon",
+        "lets-go-pikachu", "lets-go-eevee",
+        "sword", "shield", "brilliant-diamond", "shining-pearl", "legends-arceus",
+        "scarlet", "violet", "legends-z-a"
+    )
+
     init {
-        // Nada más crearse el ViewModel, pedimos los juegos
         fetchGames()
     }
 
     private fun fetchGames() {
-        // Usamos viewModelScope porque las peticiones a internet se hacen en segundo plano
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                // Llamamos a nuestra API
-                val response = RetrofitInstance.api.getGames()
-                // Guardamos los resultados
-                _games.value = response.results
+
+                // Pedimos 100 juegos para asegurarnos de que llegamos hasta Escarlata y Púrpura
+                val response = RetrofitInstance.api.getGames(limit = 100)
+
+                // Filtramos los resultados: solo nos quedamos con los que estén en nuestra lista
+                val filteredList = response.results.filter { game ->
+                    mainSeriesGames.contains(game.name)
+                }
+
+                _games.value = filteredList
             } catch (e: Exception) {
-                // Si falla (ej. no hay internet), por ahora solo imprimimos el error
                 e.printStackTrace()
             } finally {
-                // Termina la carga
                 _isLoading.value = false
             }
         }
