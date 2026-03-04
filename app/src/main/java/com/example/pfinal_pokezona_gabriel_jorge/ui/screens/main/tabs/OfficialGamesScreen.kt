@@ -1,25 +1,28 @@
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.pfinal_pokezona_gabriel_jorge.data.repository.GameRepository
 
 @Composable
@@ -46,13 +49,18 @@ fun OfficialGamesScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                verticalItemSpacing = 16.dp,
                 contentPadding = PaddingValues(bottom = 100.dp)
             ) {
-                items(games) { game ->
+                items(
+                    items = games,
+                    // Optimización CLAVE: Añadir una key. Esto le dice a Compose qué tarjeta es cuál,
+                    // evitando que las redibuje por error cuando haces scroll hacia arriba y hacia abajo.
+                    key = { game -> game.name }
+                ) { game ->
                     GameCard(gameName = game.name, onClick = { onGameClick(game.name) })
                 }
             }
@@ -62,9 +70,12 @@ fun OfficialGamesScreen(
 
 @Composable
 fun GameCard(gameName: String, onClick: () -> Unit) {
-    // Formateamos el nombre (quitar guiones y poner mayúsculas)
-    val displayName = gameName.replace("-", " ").split(" ").joinToString(" ") {
-        it.replaceFirstChar { char -> char.uppercase() }
+    // Optimización: Usar 'remember' guarda en caché el resultado del texto formateado.
+    // Así no lo calcula 60 veces por segundo al hacer scroll.
+    val displayName = remember(gameName) {
+        gameName.replace("-", " ").split(" ").joinToString(" ") {
+            it.replaceFirstChar { char -> char.uppercase() }
+        }
     }
 
     ElevatedCard(
@@ -79,12 +90,21 @@ fun GameCard(gameName: String, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
-                model = GameRepository.getCover(gameName), // Usamos nuestro repositorio limpio
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(GameRepository.getCover(gameName))
+                    .crossfade(true)
+                    // Optimización de Coil: Previene que intente cargar imágenes gigantescas,
+                    // limitando la resolución a lo que cabe en la tarjeta y ahorrando muchísima RAM.
+                    .size(coil.size.Size.ORIGINAL)
+                    .build(),
                 contentDescription = "Portada de $displayName",
-                contentScale = ContentScale.Crop,
+                contentScale = ContentScale.FillWidth,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.75f)
+                    // Le damos una altura mínima para evitar el salto de 0px a Xpx
+                    .defaultMinSize(minHeight = 150.dp)
+                    // Ponemos un color de fondo temporal mientras se descarga la imagen
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
             )
 
             Text(
@@ -92,8 +112,6 @@ fun GameCard(gameName: String, onClick: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
                 textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(12.dp)
             )
         }
