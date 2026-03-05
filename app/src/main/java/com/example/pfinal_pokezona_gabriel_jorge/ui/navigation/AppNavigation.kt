@@ -1,11 +1,17 @@
 package com.example.pfinal_pokezona_gabriel_jorge.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth.AuthState
+import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth.AuthViewModel
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth.LoginScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth.RegisterScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details.GameDetailScreen
@@ -13,16 +19,28 @@ import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details.PokemonDetai
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.MainScreen
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
+    val authState by authViewModel.authState.collectAsState()
 
-    NavHost(navController = navController, startDestination = "login") {
+    // Redirigir al Login si la sesión se cierra (authState pasa a Idle)
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Idle) {
+            navController.navigate("login") { popUpTo(0) { inclusive = true } }
+        }
+    }
+
+    NavHost(
+            navController = navController,
+            startDestination = if (authState is AuthState.Success) "main" else "login"
+    ) {
         composable("login") {
             LoginScreen(
                     onLoginSuccess = {
                         navController.navigate("main") { popUpTo("login") { inclusive = true } }
                     },
-                    onNavigateToRegister = { navController.navigate("register") }
+                    onNavigateToRegister = { navController.navigate("register") },
+                    viewModel = authViewModel
             )
         }
         composable("register") {
@@ -30,7 +48,8 @@ fun AppNavigation() {
                     onRegisterSuccess = {
                         navController.navigate("main") { popUpTo("login") { inclusive = true } }
                     },
-                    onNavigateBack = { navController.popBackStack() }
+                    onNavigateBack = { navController.popBackStack() },
+                    viewModel = authViewModel
             )
         }
         composable("main") {
@@ -39,9 +58,7 @@ fun AppNavigation() {
                     onPokemonClick = { pokemonId ->
                         navController.navigate("pokemonDetail/$pokemonId")
                     },
-                    onLogoutClick = {
-                        navController.navigate("login") { popUpTo(0) { inclusive = true } }
-                    }
+                    onLogoutClick = { authViewModel.signOut() }
             )
         }
         composable(
