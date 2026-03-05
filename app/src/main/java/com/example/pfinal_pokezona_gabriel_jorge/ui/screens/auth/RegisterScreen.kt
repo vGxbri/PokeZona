@@ -13,18 +13,19 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun LoginScreen(
-        onLoginSuccess: () -> Unit,
-        onNavigateToRegister: () -> Unit,
+fun RegisterScreen(
+        onRegisterSuccess: () -> Unit,
+        onNavigateBack: () -> Unit,
         viewModel: AuthViewModel = viewModel()
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         if (authState is AuthState.Success) {
-            onLoginSuccess()
+            onRegisterSuccess()
         }
     }
 
@@ -33,8 +34,16 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
     ) {
-        Text(text = "PokeZona", style = MaterialTheme.typography.headlineLarge)
+        Text(text = "Crear Cuenta", style = MaterialTheme.typography.headlineLarge)
         Spacer(modifier = Modifier.height(32.dp))
+
+        OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nombre Completo") },
+                modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
                 value = email,
@@ -66,10 +75,10 @@ fun LoginScreen(
             CircularProgressIndicator()
         } else {
             Button(
-                    onClick = { viewModel.login(email, password) },
+                    onClick = { viewModel.register(email, password, name) },
                     modifier = Modifier.fillMaxWidth()
-            ) { Text("Entrar") }
-            TextButton(onClick = onNavigateToRegister) { Text("¿No tienes cuenta? Regístrate") }
+            ) { Text("Registrarse") }
+            TextButton(onClick = onNavigateBack) { Text("¿Ya tienes cuenta? Inicia sesión") }
         }
     }
 }

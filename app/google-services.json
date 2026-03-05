@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "238612024369",
+    "project_id": "pokezona-4363c",
+    "storage_bucket": "pokezona-4363c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:238612024369:android:13e34de2f63b9555181910",
+        "android_client_info": {
+          "package_name": "com.example.pfinal_pokezona_gabriel_jorge"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLHh0eAKs-evdjOW9TCYSFsY8xife1rys"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth.LoginScreen
+import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth.RegisterScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details.GameDetailScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details.PokemonDetailScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.MainScreen
@@ -20,7 +21,16 @@ fun AppNavigation() {
             LoginScreen(
                     onLoginSuccess = {
                         navController.navigate("main") { popUpTo("login") { inclusive = true } }
-                    }
+                    },
+                    onNavigateToRegister = { navController.navigate("register") }
+            )
+        }
+        composable("register") {
+            RegisterScreen(
+                    onRegisterSuccess = {
+                        navController.navigate("main") { popUpTo("login") { inclusive = true } }
+                    },
+                    onNavigateBack = { navController.popBackStack() }
             )
         }
         composable("main") {
