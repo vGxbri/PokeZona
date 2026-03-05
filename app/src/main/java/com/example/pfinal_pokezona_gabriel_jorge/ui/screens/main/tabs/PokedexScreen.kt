@@ -1,5 +1,6 @@
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
+import androidx.compose.foundation.BorderStroke // <-- Importante
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -20,9 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.pfinal_pokezona_gabriel_jorge.data.model.PokemonResult
-import coil.compose.SubcomposeAsyncImage
 
 @Composable
 fun PokedexScreen(
@@ -36,28 +37,29 @@ fun PokedexScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Pokédex",
+            text = "Pokédex Nacional",
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.ExtraBold
             ),
+            // AQUÍ USAMOS TU COLOR AZUL (Secundario) PARA VARIAR
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
             }
         } else {
-            // Usamos un Grid normal de 2 columnas para una colección perfectamente alineada
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 100.dp)
+                contentPadding = PaddingValues(bottom = 140.dp)
             ) {
                 items(
                     items = pokemons,
-                    key = { pokemon -> pokemon.name } // La Key sigue siendo clave para el rendimiento
+                    key = { pokemon -> pokemon.name }
                 ) { pokemon ->
                     PokemonCard(pokemon = pokemon, onClick = { onPokemonClick(pokemon.name) })
                 }
@@ -65,9 +67,6 @@ fun PokedexScreen(
         }
     }
 }
-
-// Fíjate en añadir este import arriba si no se pone solo:
-// import coil.compose.SubcomposeAsyncImage
 
 @Composable
 fun PokemonCard(pokemon: PokemonResult, onClick: () -> Unit) {
@@ -79,15 +78,19 @@ fun PokemonCard(pokemon: PokemonResult, onClick: () -> Unit) {
         "#${pokemon.getPokemonId().padStart(3, '0')}"
     }
 
-    ElevatedCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+        // Cambiamos a cardElevation
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        // Cambiamos a cardColors
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f)
+        ),
+        // El borde azul
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f))
     ) {
         Column(
             modifier = Modifier
@@ -97,16 +100,16 @@ fun PokemonCard(pokemon: PokemonResult, onClick: () -> Unit) {
         ) {
             Text(
                 text = formattedId,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontWeight = FontWeight.Bold,
+                // El número del Pokémon con tu color azul
+                color = MaterialTheme.colorScheme.secondary,
+                fontWeight = FontWeight.ExtraBold,
                 fontSize = 12.sp,
                 modifier = Modifier.align(Alignment.End)
             )
 
-            // MAGIA AQUÍ: SubcomposeAsyncImage maneja estados de carga y error
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(pokemon.getImageUrl()) // Intenta cargar el HD primero
+                    .data(pokemon.getImageUrl())
                     .crossfade(true)
                     .build(),
                 contentDescription = "Imagen de $displayName",
@@ -114,14 +117,13 @@ fun PokemonCard(pokemon: PokemonResult, onClick: () -> Unit) {
                     .size(100.dp)
                     .padding(8.dp),
                 loading = {
-                    // Mientras carga la foto, sale una mini ruedita
                     CircularProgressIndicator(
                         modifier = Modifier.padding(32.dp),
-                        strokeWidth = 2.dp
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 },
                 error = {
-                    // Si el HD falla (404 Not Found), cargamos el sprite pixelado
                     AsyncImage(
                         model = pokemon.getSpriteUrl(),
                         contentDescription = "Sprite de $displayName",
@@ -135,6 +137,7 @@ fun PokemonCard(pokemon: PokemonResult, onClick: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.padding(top = 4.dp)
             )
         }
