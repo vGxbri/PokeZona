@@ -1,9 +1,11 @@
 package com.example.pfinal_pokezona_gabriel_jorge.data.network
 
 import com.example.pfinal_pokezona_gabriel_jorge.data.model.GameListResponse
-import com.example.pfinal_pokezona_gabriel_jorge.data.model.PokemonListResponse // <-- Nuevo import
+import com.example.pfinal_pokezona_gabriel_jorge.data.model.PokemonDetailResponse
+import com.example.pfinal_pokezona_gabriel_jorge.data.model.PokemonListResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
+import retrofit2.http.Path
 
 interface PokeApiService {
     @GET("version")
@@ -12,12 +14,14 @@ interface PokeApiService {
         @Query("offset") offset: Int = 0
     ): GameListResponse
 
-    // <-- NUEVA PETICIÓN PARA LA POKÉDEX -->
     @GET("pokemon")
     suspend fun getPokemons(
-        // Vamos a pedir los 151 originales para empezar y que cargue rápido.
-        // ¡Si quieres los 1025 que existen, solo cambia este número!
         @Query("limit") limit: Int = 151,
         @Query("offset") offset: Int = 0
     ): PokemonListResponse
+
+    @GET("pokemon/{name}")
+    suspend fun getPokemonDetail(
+        @Path("name") name: String
+    ): PokemonDetailResponse
 }
