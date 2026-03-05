@@ -12,7 +12,20 @@
           "package_name": "com.example.pfinal_pokezona_gabriel_jorge"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "238612024369-vusi9srvp0j8s6bh3htli0h6f12oir4k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.pfinal_pokezona_gabriel_jorge",
+            "certificate_hash": "07576c09c83feb81a47e8b715ae4ae4d0e9f139a"
+          }
+        },
+        {
+          "client_id": "238612024369-afhpdvg213vdef4rsser4hb7m3sarenm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDLHh0eAKs-evdjOW9TCYSFsY8xife1rys"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "238612024369-afhpdvg213vdef4rsser4hb7m3sarenm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

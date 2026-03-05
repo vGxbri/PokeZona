@@ -52,14 +52,22 @@ class AuthViewModel : ViewModel() {
                 val uid = result.user?.uid
 
                 if (uid != null) {
-                    Log.d("AuthViewModel", "Auth exitoso, UID: $uid. Guardando en Firestore...")
+                    Log.d(
+                            "AuthViewModel",
+                            "Auth exitoso, UID: $uid. Intentando guardar en Firestore..."
+                    )
 
-                    val userMap = hashMapOf("nombre" to displayName, "correo" to email)
+                    try {
+                        val userMap = hashMapOf("nombre" to displayName, "correo" to email)
+                        db.collection("usuarios").document(uid).set(userMap).await()
+                        Log.d("AuthViewModel", "Firestore guardado exitosamente")
+                    } catch (firestoreError: Exception) {
+                        Log.e(
+                                "AuthViewModel",
+                                "Error al guardar en Firestore (continuando...): ${firestoreError.message}"
+                        )
+                    }
 
-                    // Usamos await() también para Firestore
-                    db.collection("usuarios").document(uid).set(userMap).await()
-
-                    Log.d("AuthViewModel", "Firestore guardado exitosamente")
                     _authState.value = AuthState.Success(uid)
                 } else {
                     _authState.value = AuthState.Error("No se pudo obtener el ID de usuario")
@@ -88,6 +96,51 @@ class AuthViewModel : ViewModel() {
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error en login: ${e.message}", e)
                 _authState.value = AuthState.Error(e.message ?: "Error de inicio de sesión")
+            }
+        }
+    }
+
+    // Inicio de sesión con Google
+    fun signInWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            Log.d("AuthViewModel", "Iniciando sesión con Google")
+            try {
+                val credential =
+                        com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
+                val result = auth.signInWithCredential(credential).await()
+                val uid = result.user?.uid
+
+                if (uid != null) {
+                    Log.d(
+                            "AuthViewModel",
+                            "Google Auth exitoso, UID: $uid. Intentando actualizar Firestore..."
+                    )
+
+                    try {
+                        val user = result.user
+                        val userMap =
+                                hashMapOf(
+                                        "nombre" to (user?.displayName ?: "Google User"),
+                                        "correo" to (user?.email ?: "")
+                                )
+                        db.collection("usuarios").document(uid).set(userMap).await()
+                        Log.d("AuthViewModel", "Firestore actualizado")
+                    } catch (firestoreError: Exception) {
+                        Log.e(
+                                "AuthViewModel",
+                                "Error al actualizar Firestore (continuando...): ${firestoreError.message}"
+                        )
+                    }
+
+                    _authState.value = AuthState.Success(uid)
+                } else {
+                    _authState.value =
+                            AuthState.Error("No se pudo obtener el ID de usuario de Google")
+                }
+            } catch (e: Exception) {
+                Log.e("AuthViewModel", "Error en Google Login: ${e.message}", e)
+                _authState.value = AuthState.Error(e.message ?: "Error al conectar con Google")
             }
         }
     }
