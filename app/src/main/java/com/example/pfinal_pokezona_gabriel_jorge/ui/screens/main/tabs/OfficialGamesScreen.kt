@@ -1,5 +1,6 @@
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
+import androidx.compose.foundation.BorderStroke // <-- Importante
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -41,24 +42,25 @@ fun OfficialGamesScreen(
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.ExtraBold
             ),
+            // APLICAMOS TU COLOR PRIMARIO AL TÍTULO
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+                // Ruedita de carga con tu color
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
             LazyVerticalStaggeredGrid(
                 columns = StaggeredGridCells.Fixed(2),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalItemSpacing = 16.dp,
-                contentPadding = PaddingValues(bottom = 100.dp)
+                contentPadding = PaddingValues(bottom = 140.dp)
             ) {
                 items(
                     items = games,
-                    // Optimización CLAVE: Añadir una key. Esto le dice a Compose qué tarjeta es cuál,
-                    // evitando que las redibuje por error cuando haces scroll hacia arriba y hacia abajo.
                     key = { game -> game.name }
                 ) { game ->
                     GameCard(gameName = game.name, onClick = { onGameClick(game.name) })
@@ -70,20 +72,25 @@ fun OfficialGamesScreen(
 
 @Composable
 fun GameCard(gameName: String, onClick: () -> Unit) {
-    // Optimización: Usar 'remember' guarda en caché el resultado del texto formateado.
-    // Así no lo calcula 60 veces por segundo al hacer scroll.
     val displayName = remember(gameName) {
         gameName.replace("-", " ").split(" ").joinToString(" ") {
             it.replaceFirstChar { char -> char.uppercase() }
         }
     }
 
-    ElevatedCard(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp)
+        shape = RoundedCornerShape(16.dp),
+        // Fíjate que aquí ahora es cardElevation
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        // Y aquí cardColors
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        // ¡Ahora el border ya no da error!
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
@@ -93,18 +100,15 @@ fun GameCard(gameName: String, onClick: () -> Unit) {
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(GameRepository.getCover(gameName))
                     .crossfade(true)
-                    // Optimización de Coil: Previene que intente cargar imágenes gigantescas,
-                    // limitando la resolución a lo que cabe en la tarjeta y ahorrando muchísima RAM.
                     .size(coil.size.Size.ORIGINAL)
                     .build(),
                 contentDescription = "Portada de $displayName",
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier
                     .fillMaxWidth()
-                    // Le damos una altura mínima para evitar el salto de 0px a Xpx
                     .defaultMinSize(minHeight = 150.dp)
-                    // Ponemos un color de fondo temporal mientras se descarga la imagen
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    // Color de carga mientras baja la imagen
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             )
 
             Text(
@@ -112,6 +116,7 @@ fun GameCard(gameName: String, onClick: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 fontSize = 15.sp,
                 textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurface, // Color del texto dinámico
                 modifier = Modifier.padding(12.dp)
             )
         }
