@@ -107,10 +107,7 @@ fun GameCard(gameName: String, onClick: () -> Unit) {
                     .build(),
                 contentDescription = "Portada de $displayName",
                 contentScale = ContentScale.FillWidth,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 150.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                modifier = Modifier.fillMaxWidth()
             )
 
             Text(

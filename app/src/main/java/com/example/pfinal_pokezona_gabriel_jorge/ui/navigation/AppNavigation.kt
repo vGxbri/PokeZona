@@ -17,6 +17,7 @@ import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth.RegisterScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details.GameDetailScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details.PokemonDetailScreen
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.MainScreen
+import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details.CreateTeamScreen
 
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
@@ -31,51 +32,63 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
     }
 
     NavHost(
-            navController = navController,
-            startDestination = if (authState is AuthState.Success) "main" else "login"
+        navController = navController,
+        startDestination = if (authState is AuthState.Success) "main" else "login"
     ) {
         composable("login") {
             LoginScreen(
-                    onLoginSuccess = {
-                        navController.navigate("main") { popUpTo("login") { inclusive = true } }
-                    },
-                    onNavigateToRegister = { navController.navigate("register") },
-                    viewModel = authViewModel
+                onLoginSuccess = {
+                    navController.navigate("main") { popUpTo("login") { inclusive = true } }
+                },
+                onNavigateToRegister = { navController.navigate("register") },
+                viewModel = authViewModel
             )
         }
         composable("register") {
             RegisterScreen(
-                    onRegisterSuccess = {
-                        navController.navigate("main") { popUpTo("login") { inclusive = true } }
-                    },
-                    onNavigateBack = { navController.popBackStack() },
-                    viewModel = authViewModel
+                onRegisterSuccess = {
+                    navController.navigate("main") { popUpTo("login") { inclusive = true } }
+                },
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = authViewModel
             )
         }
         composable("main") {
             MainScreen(
-                    onGameClick = { gameId -> navController.navigate("gameDetail/$gameId") },
-                    onPokemonClick = { pokemonId ->
-                        navController.navigate("pokemonDetail/$pokemonId")
-                    },
-                    onLogoutClick = { authViewModel.signOut() }
+                // Llama a "gameDetail"
+                onGameClick = { gameId -> navController.navigate("gameDetail/$gameId") },
+                onPokemonClick = { pokemonId ->
+                    navController.navigate("pokemonDetail/$pokemonId")
+                },
+                onLogoutClick = { authViewModel.signOut() }
             )
         }
-        composable(
-                route = "gameDetail/{gameId}",
-                arguments = listOf(navArgument("gameId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val gameId = backStackEntry.arguments?.getString("gameId") ?: ""
-            GameDetailScreen(gameId = gameId, onBackClick = { navController.popBackStack() })
+
+        composable("gameDetail/{gameId}") { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
+            GameDetailScreen(
+                gameId = gameId,
+                onBackClick = { navController.popBackStack() },
+                onAddTeamClick = { id -> navController.navigate("create_team/$id") }
+            )
         }
+
+        composable("create_team/{gameId}") { backStackEntry ->
+            val gameId = backStackEntry.arguments?.getString("gameId") ?: return@composable
+            CreateTeamScreen(
+                gameId = gameId,
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         composable(
-                route = "pokemonDetail/{pokemonId}",
-                arguments = listOf(navArgument("pokemonId") { type = NavType.StringType })
+            route = "pokemonDetail/{pokemonId}",
+            arguments = listOf(navArgument("pokemonId") { type = NavType.StringType })
         ) { backStackEntry ->
             val pokemonId = backStackEntry.arguments?.getString("pokemonId") ?: ""
             PokemonDetailScreen(
-                    pokemonId = pokemonId,
-                    onBackClick = { navController.popBackStack() }
+                pokemonId = pokemonId,
+                onBackClick = { navController.popBackStack() }
             )
         }
     }
