@@ -82,18 +82,21 @@ fun GameCard(gameName: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        // Fíjate que aquí ahora es cardElevation
+        shape = RoundedCornerShape(
+            topStart = 4.dp,
+            topEnd = 4.dp,
+            bottomEnd = 12.dp,
+            bottomStart = 12.dp
+        ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        // Y aquí cardColors
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),
-        // ¡Ahora el border ya no da error!
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
@@ -107,7 +110,6 @@ fun GameCard(gameName: String, onClick: () -> Unit) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 150.dp)
-                    // Color de carga mientras baja la imagen
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
             )
 

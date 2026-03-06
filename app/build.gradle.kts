@@ -68,4 +68,5 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.play.services.coroutines)
+    implementation("androidx.compose.material:material-icons-extended")
 }
