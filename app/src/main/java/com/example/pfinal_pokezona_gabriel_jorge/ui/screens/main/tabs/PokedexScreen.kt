@@ -12,8 +12,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -46,6 +48,7 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
 
         val selectedGeneration by viewModel.selectedGeneration.collectAsState()
         val selectedType by viewModel.selectedType.collectAsState()
+        val searchQuery by viewModel.searchQuery.collectAsState()
         val availableGenerations = viewModel.availableGenerations
         val availableTypes = viewModel.availableTypes
 
@@ -64,6 +67,66 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.padding(bottom = 8.dp)
                 )
+
+                Surface(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                        border =
+                                BorderStroke(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                                )
+                ) {
+                        Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                                Icon(
+                                        Icons.Default.Search,
+                                        contentDescription = "Buscar",
+                                        tint = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.size(20.dp)
+                                )
+                                Box(modifier = Modifier.weight(1f)) {
+                                        if (searchQuery.isEmpty()) {
+                                                Text(
+                                                        "Buscar Pokémon...",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color =
+                                                                MaterialTheme.colorScheme
+                                                                        .onSurfaceVariant.copy(
+                                                                        alpha = 0.6f
+                                                                )
+                                                )
+                                        }
+                                        androidx.compose.foundation.text.BasicTextField(
+                                                value = searchQuery,
+                                                onValueChange = { viewModel.setSearchQuery(it) },
+                                                textStyle =
+                                                        MaterialTheme.typography.bodyMedium.copy(
+                                                                color =
+                                                                        MaterialTheme.colorScheme
+                                                                                .onSecondaryContainer
+                                                        ),
+                                                singleLine = true,
+                                                modifier = Modifier.fillMaxWidth()
+                                        )
+                                }
+                                if (searchQuery.isNotEmpty()) {
+                                        Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = "Limpiar",
+                                                tint = MaterialTheme.colorScheme.secondary,
+                                                modifier =
+                                                        Modifier.size(20.dp).clickable {
+                                                                viewModel.setSearchQuery("")
+                                                        }
+                                        )
+                                }
+                        }
+                }
 
                 // Filtros
                 Row(

@@ -29,6 +29,9 @@ class PokedexViewModel : ViewModel() {
     private val _selectedType = MutableStateFlow<String?>(null)
     val selectedType: StateFlow<String?> = _selectedType.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     val availableGenerations =
             listOf("Gen 1", "Gen 2", "Gen 3", "Gen 4", "Gen 5", "Gen 6", "Gen 7", "Gen 8", "Gen 9")
     val availableTypes =
@@ -154,6 +157,12 @@ class PokedexViewModel : ViewModel() {
                 }
             }
 
+            // Filtrar por nombre de búsqueda
+            val query = _searchQuery.value.trim().lowercase()
+            if (query.isNotEmpty()) {
+                currentList = currentList.filter { it.name.lowercase().contains(query) }
+            }
+
             _filteredPokemons.value = currentList
             _isLoading.value = false
         }
@@ -166,6 +175,11 @@ class PokedexViewModel : ViewModel() {
 
     fun setTypeFilter(type: String?) {
         _selectedType.value = type
+        applyFilters()
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
         applyFilters()
     }
 }
