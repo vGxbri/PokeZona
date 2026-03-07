@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import android.content.Context
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 
 sealed class AuthState {
     object Idle : AuthState()
@@ -37,9 +40,16 @@ class AuthViewModel : ViewModel() {
     }
 
     // Cerrar sesión
-    fun signOut() {
+    fun signOut(context: Context) {
+        // 1. Cerramos sesión en Firebase
         auth.signOut()
-        _authState.value = AuthState.Idle
+
+        // 2. Cerramos sesión en el cliente de Google del móvil
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
+        GoogleSignIn.getClient(context, gso).signOut().addOnCompleteListener {
+            // 3. Cuando termine de borrar la memoria de Google, volvemos a la pantalla de Login
+            _authState.value = AuthState.Idle
+        }
     }
 
     // Registro de usuario

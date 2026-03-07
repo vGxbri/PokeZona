@@ -54,13 +54,17 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
             )
         }
         composable("main") {
+            // Obtenemos el contexto de la pantalla
+            val context = androidx.compose.ui.platform.LocalContext.current
+
             MainScreen(
                 // Llama a "gameDetail"
                 onGameClick = { gameId -> navController.navigate("gameDetail/$gameId") },
                 onPokemonClick = { pokemonId ->
                     navController.navigate("pokemonDetail/$pokemonId")
                 },
-                onLogoutClick = { authViewModel.signOut() }
+                // Le pasamos el contexto al ViewModel al hacer click
+                onLogoutClick = { authViewModel.signOut(context) }
             )
         }
 
