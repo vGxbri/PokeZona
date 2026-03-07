@@ -1,5 +1,6 @@
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
@@ -9,30 +10,35 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FormatListNumbered
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
@@ -42,8 +48,7 @@ import com.example.pfinal_pokezona_gabriel_jorge.data.model.PokemonResult
 @Composable
 fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel = viewModel()) {
         val pokemons by viewModel.filteredPokemons.collectAsState()
-        val favoritePokemons by
-                viewModel.favoritePokemons.collectAsState() // Observamos los favoritos
+        val favoritePokemons by viewModel.favoritePokemons.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
 
         val selectedGeneration by viewModel.selectedGeneration.collectAsState()
@@ -54,6 +59,51 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
 
         var generationDropdownExpanded by remember { mutableStateOf(false) }
         var typeDropdownExpanded by remember { mutableStateOf(false) }
+        var favsExpanded by remember { mutableStateOf(true) }
+        var allPokemonExpanded by remember { mutableStateOf(true) }
+
+        // ═══ AUTO-HIDE: detectar scroll para ocultar buscador/filtros ═══
+        val gridState = rememberLazyGridState()
+        var toolbarVisible by remember { mutableStateOf(true) }
+
+        LaunchedEffect(gridState) {
+                var previousIndex = 0
+                var previousOffset = 0
+                var accumulatedDelta = 0
+                val scrollThreshold = 200 // px needed to trigger show/hide
+                snapshotFlow {
+                        gridState.firstVisibleItemIndex to gridState.firstVisibleItemScrollOffset
+                }
+                        .collect { (index, offset) ->
+                                val delta =
+                                        (index - previousIndex) * 500 + (offset - previousOffset)
+
+                                if (delta > 0) {
+                                        // Scrolling down
+                                        if (accumulatedDelta < 0) accumulatedDelta = 0
+                                        accumulatedDelta += delta
+                                        if (accumulatedDelta > scrollThreshold && index > 0) {
+                                                toolbarVisible = false
+                                                accumulatedDelta = 0
+                                        }
+                                } else if (delta < 0) {
+                                        // Scrolling up
+                                        if (accumulatedDelta > 0) accumulatedDelta = 0
+                                        accumulatedDelta += delta
+                                        if (accumulatedDelta < -scrollThreshold) {
+                                                toolbarVisible = true
+                                                accumulatedDelta = 0
+                                        }
+                                }
+                                // Always show when at the very top
+                                if (index == 0 && offset == 0) {
+                                        toolbarVisible = true
+                                        accumulatedDelta = 0
+                                }
+                                previousIndex = index
+                                previousOffset = offset
+                        }
+        }
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -65,353 +115,517 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                                         fontWeight = FontWeight.ExtraBold
                                 ),
                         color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = 16.dp)
                 )
 
-                Surface(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
-                        border =
-                                BorderStroke(
-                                        1.dp,
-                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-                                )
+                // ═══ BUSCADOR + FILTROS (auto-hide) ═══
+                AnimatedVisibility(
+                        visible = toolbarVisible,
+                        enter = fadeIn(tween(200)) + expandVertically(tween(250)),
+                        exit = fadeOut(tween(200)) + shrinkVertically(tween(250))
                 ) {
-                        Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                                Icon(
-                                        Icons.Default.Search,
-                                        contentDescription = "Buscar",
-                                        tint = MaterialTheme.colorScheme.secondary,
-                                        modifier = Modifier.size(20.dp)
-                                )
-                                Box(modifier = Modifier.weight(1f)) {
-                                        if (searchQuery.isEmpty()) {
+                        Column {
+                                // ═══ BUSCADOR ═══
+                                OutlinedTextField(
+                                        value = searchQuery,
+                                        onValueChange = { viewModel.setSearchQuery(it) },
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                                        placeholder = {
                                                 Text(
                                                         "Buscar Pokémon...",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        color =
-                                                                MaterialTheme.colorScheme
-                                                                        .onSurfaceVariant.copy(
-                                                                        alpha = 0.6f
+                                                        style = MaterialTheme.typography.bodyMedium
+                                                )
+                                        },
+                                        leadingIcon = {
+                                                Icon(
+                                                        Icons.Default.Search,
+                                                        contentDescription = "Buscar",
+                                                        tint = MaterialTheme.colorScheme.secondary,
+                                                        modifier = Modifier.size(20.dp)
+                                                )
+                                        },
+                                        trailingIcon = {
+                                                if (searchQuery.isNotEmpty()) {
+                                                        IconButton(
+                                                                onClick = {
+                                                                        viewModel.setSearchQuery("")
+                                                                }
+                                                        ) {
+                                                                Icon(
+                                                                        Icons.Default.Close,
+                                                                        contentDescription =
+                                                                                "Limpiar",
+                                                                        tint =
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .secondary,
+                                                                        modifier =
+                                                                                Modifier.size(20.dp)
                                                                 )
-                                                )
-                                        }
-                                        androidx.compose.foundation.text.BasicTextField(
-                                                value = searchQuery,
-                                                onValueChange = { viewModel.setSearchQuery(it) },
-                                                textStyle =
-                                                        MaterialTheme.typography.bodyMedium.copy(
-                                                                color =
-                                                                        MaterialTheme.colorScheme
-                                                                                .onSecondaryContainer
-                                                        ),
-                                                singleLine = true,
-                                                modifier = Modifier.fillMaxWidth()
-                                        )
-                                }
-                                if (searchQuery.isNotEmpty()) {
-                                        Icon(
-                                                Icons.Default.Close,
-                                                contentDescription = "Limpiar",
-                                                tint = MaterialTheme.colorScheme.secondary,
-                                                modifier =
-                                                        Modifier.size(20.dp).clickable {
-                                                                viewModel.setSearchQuery("")
                                                         }
-                                        )
-                                }
-                        }
-                }
-
-                // Filtros
-                Row(
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                        // Gen Dropdown
-                        Box(modifier = Modifier.weight(1f)) {
-                                val genRotation by
-                                        animateFloatAsState(
-                                                targetValue =
-                                                        if (generationDropdownExpanded) 180f
-                                                        else 0f,
-                                                animationSpec = tween(durationMillis = 250),
-                                                label = "genArrow"
-                                        )
-                                Surface(
-                                        onClick = { generationDropdownExpanded = true },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp),
-                                        color =
-                                                MaterialTheme.colorScheme.secondaryContainer.copy(
-                                                        alpha = 0.5f
+                                                }
+                                        },
+                                        singleLine = true,
+                                        shape = RoundedCornerShape(28.dp),
+                                        colors =
+                                                OutlinedTextFieldDefaults.colors(
+                                                        focusedBorderColor =
+                                                                MaterialTheme.colorScheme.secondary,
+                                                        unfocusedBorderColor =
+                                                                MaterialTheme.colorScheme.secondary
+                                                                        .copy(alpha = 0.3f),
+                                                        cursorColor =
+                                                                MaterialTheme.colorScheme.secondary,
+                                                        focusedContainerColor =
+                                                                MaterialTheme.colorScheme
+                                                                        .secondaryContainer.copy(
+                                                                        alpha = 0.15f
+                                                                ),
+                                                        unfocusedContainerColor =
+                                                                MaterialTheme.colorScheme
+                                                                        .secondaryContainer.copy(
+                                                                        alpha = 0.08f
+                                                                )
                                                 ),
-                                        border =
-                                                BorderStroke(
-                                                        1.dp,
-                                                        MaterialTheme.colorScheme.secondary.copy(
-                                                                alpha = 0.3f
-                                                        )
+                                        textStyle =
+                                                MaterialTheme.typography.bodyMedium.copy(
+                                                        color = MaterialTheme.colorScheme.onSurface
                                                 )
+                                )
+
+                                // ═══ FILTROS ═══
+                                Row(
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                        Row(
-                                                modifier =
-                                                        Modifier.padding(
-                                                                horizontal = 14.dp,
-                                                                vertical = 12.dp
-                                                        ),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                                Text(
-                                                        text = selectedGeneration ?: "Generación",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight =
-                                                                if (selectedGeneration != null)
-                                                                        FontWeight.SemiBold
-                                                                else FontWeight.Normal,
+                                        // Gen Filter — OutlinedTextField style
+                                        Box(modifier = Modifier.weight(1f)) {
+                                                val genRotation by
+                                                        animateFloatAsState(
+                                                                targetValue =
+                                                                        if (generationDropdownExpanded
+                                                                        )
+                                                                                180f
+                                                                        else 0f,
+                                                                animationSpec =
+                                                                        tween(durationMillis = 250),
+                                                                label = "genArrow"
+                                                        )
+                                                Surface(
+                                                        onClick = {
+                                                                generationDropdownExpanded = true
+                                                        },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(28.dp),
                                                         color =
                                                                 if (selectedGeneration != null)
                                                                         MaterialTheme.colorScheme
-                                                                                .onSecondaryContainer
+                                                                                .secondaryContainer
+                                                                                .copy(alpha = 0.15f)
                                                                 else
                                                                         MaterialTheme.colorScheme
-                                                                                .onSurfaceVariant
-                                                )
-                                                Icon(
-                                                        imageVector =
-                                                                Icons.Default.KeyboardArrowDown,
-                                                        contentDescription = "Desplegar",
-                                                        tint = MaterialTheme.colorScheme.secondary,
+                                                                                .secondaryContainer
+                                                                                .copy(
+                                                                                        alpha =
+                                                                                                0.08f
+                                                                                ),
+                                                        border =
+                                                                BorderStroke(
+                                                                        1.dp,
+                                                                        if (selectedGeneration !=
+                                                                                        null
+                                                                        )
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .secondary
+                                                                        else
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .secondary
+                                                                                        .copy(
+                                                                                                alpha =
+                                                                                                        0.3f
+                                                                                        )
+                                                                )
+                                                ) {
+                                                        Row(
+                                                                modifier =
+                                                                        Modifier.padding(
+                                                                                horizontal = 16.dp,
+                                                                                vertical = 14.dp
+                                                                        ),
+                                                                verticalAlignment =
+                                                                        Alignment.CenterVertically
+                                                        ) {
+                                                                Text(
+                                                                        text = selectedGeneration
+                                                                                        ?: "Generación",
+                                                                        style =
+                                                                                MaterialTheme
+                                                                                        .typography
+                                                                                        .bodyMedium,
+                                                                        fontWeight =
+                                                                                if (selectedGeneration !=
+                                                                                                null
+                                                                                )
+                                                                                        FontWeight
+                                                                                                .SemiBold
+                                                                                else
+                                                                                        FontWeight
+                                                                                                .Normal,
+                                                                        color =
+                                                                                if (selectedGeneration !=
+                                                                                                null
+                                                                                )
+                                                                                        MaterialTheme
+                                                                                                .colorScheme
+                                                                                                .onSurface
+                                                                                else
+                                                                                        MaterialTheme
+                                                                                                .colorScheme
+                                                                                                .onSurfaceVariant,
+                                                                        modifier =
+                                                                                Modifier.weight(1f)
+                                                                )
+                                                                Icon(
+                                                                        imageVector =
+                                                                                Icons.Default
+                                                                                        .KeyboardArrowDown,
+                                                                        contentDescription =
+                                                                                "Desplegar",
+                                                                        tint =
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .secondary,
+                                                                        modifier =
+                                                                                Modifier.size(20.dp)
+                                                                                        .graphicsLayer {
+                                                                                                rotationZ =
+                                                                                                        genRotation
+                                                                                        }
+                                                                )
+                                                        }
+                                                }
+                                                DropdownMenu(
+                                                        expanded = generationDropdownExpanded,
+                                                        onDismissRequest = {
+                                                                generationDropdownExpanded = false
+                                                        },
                                                         modifier =
-                                                                Modifier.size(20.dp)
-                                                                        .rotate(genRotation)
-                                                )
-                                        }
-                                }
-                                DropdownMenu(
-                                        expanded = generationDropdownExpanded,
-                                        onDismissRequest = { generationDropdownExpanded = false },
-                                        modifier = Modifier.width(160.dp)
-                                ) {
-                                        DropdownMenuItem(
-                                                text = {
-                                                        Text(
-                                                                "Todas",
-                                                                fontWeight =
+                                                                Modifier.width(180.dp)
+                                                                        .heightIn(max = 300.dp),
+                                                        properties =
+                                                                PopupProperties(focusable = true)
+                                                ) {
+                                                        DropdownMenuItem(
+                                                                text = {
+                                                                        Text(
+                                                                                "Todas",
+                                                                                fontWeight =
+                                                                                        if (selectedGeneration ==
+                                                                                                        null
+                                                                                        )
+                                                                                                FontWeight
+                                                                                                        .Bold
+                                                                                        else
+                                                                                                FontWeight
+                                                                                                        .Normal
+                                                                        )
+                                                                },
+                                                                onClick = {
+                                                                        viewModel
+                                                                                .setGenerationFilter(
+                                                                                        null
+                                                                                )
+                                                                        generationDropdownExpanded =
+                                                                                false
+                                                                },
+                                                                trailingIcon = {
                                                                         if (selectedGeneration ==
                                                                                         null
                                                                         )
-                                                                                FontWeight.Bold
-                                                                        else FontWeight.Normal
+                                                                                Icon(
+                                                                                        Icons.Default
+                                                                                                .Check,
+                                                                                        contentDescription =
+                                                                                                null,
+                                                                                        tint =
+                                                                                                MaterialTheme
+                                                                                                        .colorScheme
+                                                                                                        .primary,
+                                                                                        modifier =
+                                                                                                Modifier.size(
+                                                                                                        18.dp
+                                                                                                )
+                                                                                )
+                                                                }
                                                         )
-                                                },
-                                                onClick = {
-                                                        viewModel.setGenerationFilter(null)
-                                                        generationDropdownExpanded = false
-                                                },
-                                                trailingIcon = {
-                                                        if (selectedGeneration == null)
-                                                                Icon(
-                                                                        Icons.Default.Check,
-                                                                        contentDescription = null,
-                                                                        tint =
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .primary,
-                                                                        modifier =
-                                                                                Modifier.size(18.dp)
-                                                                )
-                                                }
-                                        )
-                                        HorizontalDivider(
-                                                modifier = Modifier.padding(horizontal = 12.dp)
-                                        )
-                                        availableGenerations.forEach { gen ->
-                                                DropdownMenuItem(
-                                                        text = {
-                                                                Text(
-                                                                        gen,
-                                                                        fontWeight =
+                                                        HorizontalDivider(
+                                                                modifier =
+                                                                        Modifier.padding(
+                                                                                horizontal = 12.dp
+                                                                        )
+                                                        )
+                                                        availableGenerations.forEach { gen ->
+                                                                DropdownMenuItem(
+                                                                        text = {
+                                                                                Text(
+                                                                                        gen,
+                                                                                        fontWeight =
+                                                                                                if (selectedGeneration ==
+                                                                                                                gen
+                                                                                                )
+                                                                                                        FontWeight
+                                                                                                                .Bold
+                                                                                                else
+                                                                                                        FontWeight
+                                                                                                                .Normal
+                                                                                )
+                                                                        },
+                                                                        onClick = {
+                                                                                viewModel
+                                                                                        .setGenerationFilter(
+                                                                                                gen
+                                                                                        )
+                                                                                generationDropdownExpanded =
+                                                                                        false
+                                                                        },
+                                                                        trailingIcon = {
                                                                                 if (selectedGeneration ==
                                                                                                 gen
                                                                                 )
-                                                                                        FontWeight
-                                                                                                .Bold
-                                                                                else
-                                                                                        FontWeight
-                                                                                                .Normal
-                                                                )
-                                                        },
-                                                        onClick = {
-                                                                viewModel.setGenerationFilter(gen)
-                                                                generationDropdownExpanded = false
-                                                        },
-                                                        trailingIcon = {
-                                                                if (selectedGeneration == gen)
-                                                                        Icon(
-                                                                                Icons.Default.Check,
-                                                                                contentDescription =
-                                                                                        null,
-                                                                                tint =
-                                                                                        MaterialTheme
-                                                                                                .colorScheme
-                                                                                                .primary,
-                                                                                modifier =
-                                                                                        Modifier.size(
-                                                                                                18.dp
+                                                                                        Icon(
+                                                                                                Icons.Default
+                                                                                                        .Check,
+                                                                                                contentDescription =
+                                                                                                        null,
+                                                                                                tint =
+                                                                                                        MaterialTheme
+                                                                                                                .colorScheme
+                                                                                                                .primary,
+                                                                                                modifier =
+                                                                                                        Modifier.size(
+                                                                                                                18.dp
+                                                                                                        )
                                                                                         )
-                                                                        )
+                                                                        }
+                                                                )
                                                         }
-                                                )
+                                                }
                                         }
-                                }
-                        }
 
-                        // Type Dropdown
-                        Box(modifier = Modifier.weight(1f)) {
-                                val typeRotation by
-                                        animateFloatAsState(
-                                                targetValue =
-                                                        if (typeDropdownExpanded) 180f else 0f,
-                                                animationSpec = tween(durationMillis = 250),
-                                                label = "typeArrow"
-                                        )
-                                Surface(
-                                        onClick = { typeDropdownExpanded = true },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        shape = RoundedCornerShape(12.dp),
-                                        color =
-                                                MaterialTheme.colorScheme.secondaryContainer.copy(
-                                                        alpha = 0.5f
-                                                ),
-                                        border =
-                                                BorderStroke(
-                                                        1.dp,
-                                                        MaterialTheme.colorScheme.secondary.copy(
-                                                                alpha = 0.3f
+                                        // Type Filter — OutlinedTextField style
+                                        Box(modifier = Modifier.weight(1f)) {
+                                                val typeRotation by
+                                                        animateFloatAsState(
+                                                                targetValue =
+                                                                        if (typeDropdownExpanded)
+                                                                                180f
+                                                                        else 0f,
+                                                                animationSpec =
+                                                                        tween(durationMillis = 250),
+                                                                label = "typeArrow"
                                                         )
-                                                )
-                                ) {
-                                        Row(
-                                                modifier =
-                                                        Modifier.padding(
-                                                                horizontal = 14.dp,
-                                                                vertical = 12.dp
-                                                        ),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                                Text(
-                                                        text =
-                                                                selectedType?.replaceFirstChar {
-                                                                        it.uppercase()
-                                                                }
-                                                                        ?: "Tipo",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        fontWeight =
-                                                                if (selectedType != null)
-                                                                        FontWeight.SemiBold
-                                                                else FontWeight.Normal,
+                                                Surface(
+                                                        onClick = { typeDropdownExpanded = true },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(28.dp),
                                                         color =
                                                                 if (selectedType != null)
                                                                         MaterialTheme.colorScheme
-                                                                                .onSecondaryContainer
+                                                                                .secondaryContainer
+                                                                                .copy(alpha = 0.15f)
                                                                 else
                                                                         MaterialTheme.colorScheme
-                                                                                .onSurfaceVariant
-                                                )
-                                                Icon(
-                                                        imageVector =
-                                                                Icons.Default.KeyboardArrowDown,
-                                                        contentDescription = "Desplegar",
-                                                        tint = MaterialTheme.colorScheme.secondary,
-                                                        modifier =
-                                                                Modifier.size(20.dp)
-                                                                        .rotate(typeRotation)
-                                                )
-                                        }
-                                }
-                                DropdownMenu(
-                                        expanded = typeDropdownExpanded,
-                                        onDismissRequest = { typeDropdownExpanded = false },
-                                        modifier = Modifier.width(160.dp)
-                                ) {
-                                        DropdownMenuItem(
-                                                text = {
-                                                        Text(
-                                                                "Todos",
-                                                                fontWeight =
-                                                                        if (selectedType == null)
-                                                                                FontWeight.Bold
-                                                                        else FontWeight.Normal
-                                                        )
-                                                },
-                                                onClick = {
-                                                        viewModel.setTypeFilter(null)
-                                                        typeDropdownExpanded = false
-                                                },
-                                                trailingIcon = {
-                                                        if (selectedType == null)
+                                                                                .secondaryContainer
+                                                                                .copy(
+                                                                                        alpha =
+                                                                                                0.08f
+                                                                                ),
+                                                        border =
+                                                                BorderStroke(
+                                                                        1.dp,
+                                                                        if (selectedType != null)
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .secondary
+                                                                        else
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .secondary
+                                                                                        .copy(
+                                                                                                alpha =
+                                                                                                        0.3f
+                                                                                        )
+                                                                )
+                                                ) {
+                                                        Row(
+                                                                modifier =
+                                                                        Modifier.padding(
+                                                                                horizontal = 16.dp,
+                                                                                vertical = 14.dp
+                                                                        ),
+                                                                verticalAlignment =
+                                                                        Alignment.CenterVertically
+                                                        ) {
+                                                                Text(
+                                                                        text =
+                                                                                selectedType
+                                                                                        ?.replaceFirstChar {
+                                                                                                it.uppercase()
+                                                                                        }
+                                                                                        ?: "Tipo",
+                                                                        style =
+                                                                                MaterialTheme
+                                                                                        .typography
+                                                                                        .bodyMedium,
+                                                                        fontWeight =
+                                                                                if (selectedType !=
+                                                                                                null
+                                                                                )
+                                                                                        FontWeight
+                                                                                                .SemiBold
+                                                                                else
+                                                                                        FontWeight
+                                                                                                .Normal,
+                                                                        color =
+                                                                                if (selectedType !=
+                                                                                                null
+                                                                                )
+                                                                                        MaterialTheme
+                                                                                                .colorScheme
+                                                                                                .onSurface
+                                                                                else
+                                                                                        MaterialTheme
+                                                                                                .colorScheme
+                                                                                                .onSurfaceVariant,
+                                                                        modifier =
+                                                                                Modifier.weight(1f)
+                                                                )
                                                                 Icon(
-                                                                        Icons.Default.Check,
-                                                                        contentDescription = null,
+                                                                        imageVector =
+                                                                                Icons.Default
+                                                                                        .KeyboardArrowDown,
+                                                                        contentDescription =
+                                                                                "Desplegar",
                                                                         tint =
                                                                                 MaterialTheme
                                                                                         .colorScheme
-                                                                                        .primary,
+                                                                                        .secondary,
                                                                         modifier =
-                                                                                Modifier.size(18.dp)
+                                                                                Modifier.size(20.dp)
+                                                                                        .graphicsLayer {
+                                                                                                rotationZ =
+                                                                                                        typeRotation
+                                                                                        }
                                                                 )
+                                                        }
                                                 }
-                                        )
-                                        HorizontalDivider(
-                                                modifier = Modifier.padding(horizontal = 12.dp)
-                                        )
-                                        availableTypes.forEach { type ->
-                                                DropdownMenuItem(
-                                                        text = {
-                                                                Text(
-                                                                        type.replaceFirstChar {
-                                                                                it.uppercase()
+                                                DropdownMenu(
+                                                        expanded = typeDropdownExpanded,
+                                                        onDismissRequest = {
+                                                                typeDropdownExpanded = false
+                                                        },
+                                                        modifier =
+                                                                Modifier.width(180.dp)
+                                                                        .heightIn(max = 300.dp),
+                                                        properties =
+                                                                PopupProperties(focusable = true)
+                                                ) {
+                                                        DropdownMenuItem(
+                                                                text = {
+                                                                        Text(
+                                                                                "Todos",
+                                                                                fontWeight =
+                                                                                        if (selectedType ==
+                                                                                                        null
+                                                                                        )
+                                                                                                FontWeight
+                                                                                                        .Bold
+                                                                                        else
+                                                                                                FontWeight
+                                                                                                        .Normal
+                                                                        )
+                                                                },
+                                                                onClick = {
+                                                                        viewModel.setTypeFilter(
+                                                                                null
+                                                                        )
+                                                                        typeDropdownExpanded = false
+                                                                },
+                                                                trailingIcon = {
+                                                                        if (selectedType == null)
+                                                                                Icon(
+                                                                                        Icons.Default
+                                                                                                .Check,
+                                                                                        contentDescription =
+                                                                                                null,
+                                                                                        tint =
+                                                                                                MaterialTheme
+                                                                                                        .colorScheme
+                                                                                                        .primary,
+                                                                                        modifier =
+                                                                                                Modifier.size(
+                                                                                                        18.dp
+                                                                                                )
+                                                                                )
+                                                                }
+                                                        )
+                                                        HorizontalDivider(
+                                                                modifier =
+                                                                        Modifier.padding(
+                                                                                horizontal = 12.dp
+                                                                        )
+                                                        )
+                                                        availableTypes.forEach { type ->
+                                                                DropdownMenuItem(
+                                                                        text = {
+                                                                                Text(
+                                                                                        type
+                                                                                                .replaceFirstChar {
+                                                                                                        it.uppercase()
+                                                                                                },
+                                                                                        fontWeight =
+                                                                                                if (selectedType ==
+                                                                                                                type
+                                                                                                )
+                                                                                                        FontWeight
+                                                                                                                .Bold
+                                                                                                else
+                                                                                                        FontWeight
+                                                                                                                .Normal
+                                                                                )
                                                                         },
-                                                                        fontWeight =
+                                                                        onClick = {
+                                                                                viewModel
+                                                                                        .setTypeFilter(
+                                                                                                type
+                                                                                        )
+                                                                                typeDropdownExpanded =
+                                                                                        false
+                                                                        },
+                                                                        trailingIcon = {
                                                                                 if (selectedType ==
                                                                                                 type
                                                                                 )
-                                                                                        FontWeight
-                                                                                                .Bold
-                                                                                else
-                                                                                        FontWeight
-                                                                                                .Normal
-                                                                )
-                                                        },
-                                                        onClick = {
-                                                                viewModel.setTypeFilter(type)
-                                                                typeDropdownExpanded = false
-                                                        },
-                                                        trailingIcon = {
-                                                                if (selectedType == type)
-                                                                        Icon(
-                                                                                Icons.Default.Check,
-                                                                                contentDescription =
-                                                                                        null,
-                                                                                tint =
-                                                                                        MaterialTheme
-                                                                                                .colorScheme
-                                                                                                .primary,
-                                                                                modifier =
-                                                                                        Modifier.size(
-                                                                                                18.dp
+                                                                                        Icon(
+                                                                                                Icons.Default
+                                                                                                        .Check,
+                                                                                                contentDescription =
+                                                                                                        null,
+                                                                                                tint =
+                                                                                                        MaterialTheme
+                                                                                                                .colorScheme
+                                                                                                                .primary,
+                                                                                                modifier =
+                                                                                                        Modifier.size(
+                                                                                                                18.dp
+                                                                                                        )
                                                                                         )
-                                                                        )
+                                                                        }
+                                                                )
                                                         }
-                                                )
+                                                }
                                         }
                                 }
                         }
@@ -427,36 +641,108 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
 
                         LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),
+                                state = gridState,
                                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
                                 contentPadding = PaddingValues(bottom = 140.dp)
                         ) {
+                                // ═══ SECCIÓN: FAVORITOS ═══
                                 if (favs.isNotEmpty()) {
                                         item(span = { GridItemSpan(maxLineSpan) }) {
-                                                Text(
-                                                        text = "Favoritos",
-                                                        style =
-                                                                MaterialTheme.typography.titleLarge
-                                                                        .copy(
-                                                                                fontWeight =
-                                                                                        FontWeight
-                                                                                                .Bold
+                                                Column {
+                                                        ExpandableSectionHeader(
+                                                                title = "Favoritos",
+                                                                count = favs.size,
+                                                                isExpanded = favsExpanded,
+                                                                onToggle = {
+                                                                        favsExpanded = !favsExpanded
+                                                                },
+                                                                icon = Icons.Default.Favorite,
+                                                                accentColor =
+                                                                        MaterialTheme.colorScheme
+                                                                                .primary
+                                                        )
+                                                        HorizontalDivider(
+                                                                modifier =
+                                                                        Modifier.padding(
+                                                                                top = 4.dp,
+                                                                                bottom = 8.dp
                                                                         ),
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                        modifier =
-                                                                Modifier.padding(
-                                                                        bottom = 8.dp,
-                                                                        top = 8.dp
-                                                                )
-                                                )
+                                                                color =
+                                                                        MaterialTheme.colorScheme
+                                                                                .onBackground.copy(
+                                                                                alpha = 0.2f
+                                                                        )
+                                                        )
+                                                }
                                         }
                                         items(
                                                 items = favs,
                                                 key = { pokemon -> "fav_${pokemon.name}" }
                                         ) { pokemon ->
+                                                AnimatedVisibility(
+                                                        visible = favsExpanded,
+                                                        enter = fadeIn() + expandVertically(),
+                                                        exit = fadeOut() + shrinkVertically()
+                                                ) {
+                                                        PokemonCard(
+                                                                pokemon = pokemon,
+                                                                isFavorite = true,
+                                                                onFavoriteClick = {
+                                                                        viewModel.toggleFavorite(
+                                                                                pokemon.name
+                                                                        )
+                                                                },
+                                                                onClick = {
+                                                                        onPokemonClick(pokemon.name)
+                                                                }
+                                                        )
+                                                }
+                                        }
+                                }
+
+                                // ═══ SECCIÓN: TODOS LOS POKÉMON (sin favoritos) ═══
+                                item(span = { GridItemSpan(maxLineSpan) }) {
+                                        Column {
+                                                ExpandableSectionHeader(
+                                                        title = "Todos los Pokémon",
+                                                        count = pokemons.size,
+                                                        isExpanded = allPokemonExpanded,
+                                                        onToggle = {
+                                                                allPokemonExpanded =
+                                                                        !allPokemonExpanded
+                                                        },
+                                                        icon = Icons.Default.FormatListNumbered,
+                                                        accentColor =
+                                                                MaterialTheme.colorScheme.secondary
+                                                )
+                                                HorizontalDivider(
+                                                        modifier =
+                                                                Modifier.padding(
+                                                                        top = 4.dp,
+                                                                        bottom = 8.dp
+                                                                ),
+                                                        color =
+                                                                MaterialTheme.colorScheme
+                                                                        .onBackground.copy(
+                                                                        alpha = 0.2f
+                                                                )
+                                                )
+                                        }
+                                }
+
+                                items(
+                                        items = pokemons,
+                                        key = { pokemon -> "all_${pokemon.name}" }
+                                ) { pokemon ->
+                                        AnimatedVisibility(
+                                                visible = allPokemonExpanded,
+                                                enter = fadeIn() + expandVertically(),
+                                                exit = fadeOut() + shrinkVertically()
+                                        ) {
                                                 PokemonCard(
                                                         pokemon = pokemon,
-                                                        isFavorite = true,
+                                                        isFavorite = false,
                                                         onFavoriteClick = {
                                                                 viewModel.toggleFavorite(
                                                                         pokemon.name
@@ -465,37 +751,6 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                                                         onClick = { onPokemonClick(pokemon.name) }
                                                 )
                                         }
-                                }
-
-                                item(span = { GridItemSpan(maxLineSpan) }) {
-                                        Text(
-                                                text = "Todos los Pokémon",
-                                                style =
-                                                        MaterialTheme.typography.titleLarge.copy(
-                                                                fontWeight = FontWeight.Bold
-                                                        ),
-                                                color = MaterialTheme.colorScheme.primary,
-                                                modifier =
-                                                        Modifier.padding(bottom = 8.dp, top = 16.dp)
-                                        )
-                                }
-
-                                items(
-                                        items = pokemons,
-                                        key = { pokemon -> "all_${pokemon.name}" }
-                                ) { pokemon ->
-                                        // Verificamos si este Pokémon en concreto está en la lista
-                                        // de favoritos
-                                        val isFavorite = favoritePokemons.contains(pokemon.name)
-
-                                        PokemonCard(
-                                                pokemon = pokemon,
-                                                isFavorite = isFavorite,
-                                                onFavoriteClick = {
-                                                        viewModel.toggleFavorite(pokemon.name)
-                                                },
-                                                onClick = { onPokemonClick(pokemon.name) }
-                                        )
                                 }
                         }
                 }
@@ -514,7 +769,6 @@ fun PokemonCard(
 
         val formattedId = remember(pokemon.name) { "#${pokemon.getPokemonId().padStart(3, '0')}" }
 
-        // Animación de latido para el corazón
         val scale by
                 animateFloatAsState(
                         targetValue = if (isFavorite) 1.2f else 1f,
@@ -522,26 +776,18 @@ fun PokemonCard(
                         label = "heartScale"
                 )
 
-        Card( // Usamos Card en lugar de ElevatedCard como arreglamos antes
+        Card(
                 modifier = Modifier.fillMaxWidth().clickable { onClick() },
                 shape = RoundedCornerShape(16.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 colors =
-                        CardDefaults.cardColors(
-                                containerColor =
-                                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.05f)
-                        ),
+                        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f))
         ) {
                 Column(
-                        modifier =
-                                Modifier.fillMaxWidth()
-                                        .padding(
-                                                8.dp
-                                        ), // Reducimos un poco el padding global de la tarjeta
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                        // Fila superior con el Corazón y el ID del Pokémon
                         Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -565,10 +811,7 @@ fun PokemonCard(
                                                                         .onSurfaceVariant.copy(
                                                                         alpha = 0.4f
                                                                 ),
-                                                modifier =
-                                                        Modifier.scale(
-                                                                scale
-                                                        ) // Aplica la animación de latido
+                                                modifier = Modifier.scale(scale)
                                         )
                                 }
 
@@ -588,11 +831,7 @@ fun PokemonCard(
                                                 .crossfade(true)
                                                 .build(),
                                 contentDescription = "Imagen de $displayName",
-                                modifier =
-                                        Modifier.size(
-                                                        90.dp
-                                                ) // Un poco más pequeño para dar espacio al corazón
-                                                .padding(4.dp),
+                                modifier = Modifier.size(90.dp).padding(4.dp),
                                 loading = {
                                         CircularProgressIndicator(
                                                 modifier = Modifier.padding(24.dp),

@@ -41,6 +41,13 @@ fun OfficialGamesScreen(onGameClick: (String) -> Unit, viewModel: GamesViewModel
         var completedExpanded by remember { mutableStateOf(true) }
         var allGamesExpanded by remember { mutableStateOf(false) }
 
+        // Expandir "Todos los Juegos" por defecto si no hay completados al cargar
+        LaunchedEffect(isLoading) {
+                if (!isLoading) {
+                        allGamesExpanded = completedGamesIds.isEmpty()
+                }
+        }
+
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
                 Spacer(modifier = Modifier.height(24.dp))
 
