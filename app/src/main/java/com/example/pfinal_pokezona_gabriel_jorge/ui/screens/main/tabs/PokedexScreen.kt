@@ -11,15 +11,20 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -34,10 +39,18 @@ import com.example.pfinal_pokezona_gabriel_jorge.data.model.PokemonResult
 
 @Composable
 fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel = viewModel()) {
-        val pokemons by viewModel.pokemons.collectAsState()
+        val pokemons by viewModel.filteredPokemons.collectAsState()
         val favoritePokemons by
                 viewModel.favoritePokemons.collectAsState() // Observamos los favoritos
         val isLoading by viewModel.isLoading.collectAsState()
+
+        val selectedGeneration by viewModel.selectedGeneration.collectAsState()
+        val selectedType by viewModel.selectedType.collectAsState()
+        val availableGenerations = viewModel.availableGenerations
+        val availableTypes = viewModel.availableTypes
+
+        var generationDropdownExpanded by remember { mutableStateOf(false) }
+        var typeDropdownExpanded by remember { mutableStateOf(false) }
 
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -49,8 +62,297 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                                         fontWeight = FontWeight.ExtraBold
                                 ),
                         color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = 8.dp)
                 )
+
+                // Filtros
+                Row(
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                        // Gen Dropdown
+                        Box(modifier = Modifier.weight(1f)) {
+                                val genRotation by
+                                        animateFloatAsState(
+                                                targetValue =
+                                                        if (generationDropdownExpanded) 180f
+                                                        else 0f,
+                                                animationSpec = tween(durationMillis = 250),
+                                                label = "genArrow"
+                                        )
+                                Surface(
+                                        onClick = { generationDropdownExpanded = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        color =
+                                                MaterialTheme.colorScheme.secondaryContainer.copy(
+                                                        alpha = 0.5f
+                                                ),
+                                        border =
+                                                BorderStroke(
+                                                        1.dp,
+                                                        MaterialTheme.colorScheme.secondary.copy(
+                                                                alpha = 0.3f
+                                                        )
+                                                )
+                                ) {
+                                        Row(
+                                                modifier =
+                                                        Modifier.padding(
+                                                                horizontal = 14.dp,
+                                                                vertical = 12.dp
+                                                        ),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                                Text(
+                                                        text = selectedGeneration ?: "Generación",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight =
+                                                                if (selectedGeneration != null)
+                                                                        FontWeight.SemiBold
+                                                                else FontWeight.Normal,
+                                                        color =
+                                                                if (selectedGeneration != null)
+                                                                        MaterialTheme.colorScheme
+                                                                                .onSecondaryContainer
+                                                                else
+                                                                        MaterialTheme.colorScheme
+                                                                                .onSurfaceVariant
+                                                )
+                                                Icon(
+                                                        imageVector =
+                                                                Icons.Default.KeyboardArrowDown,
+                                                        contentDescription = "Desplegar",
+                                                        tint = MaterialTheme.colorScheme.secondary,
+                                                        modifier =
+                                                                Modifier.size(20.dp)
+                                                                        .rotate(genRotation)
+                                                )
+                                        }
+                                }
+                                DropdownMenu(
+                                        expanded = generationDropdownExpanded,
+                                        onDismissRequest = { generationDropdownExpanded = false },
+                                        modifier = Modifier.width(160.dp)
+                                ) {
+                                        DropdownMenuItem(
+                                                text = {
+                                                        Text(
+                                                                "Todas",
+                                                                fontWeight =
+                                                                        if (selectedGeneration ==
+                                                                                        null
+                                                                        )
+                                                                                FontWeight.Bold
+                                                                        else FontWeight.Normal
+                                                        )
+                                                },
+                                                onClick = {
+                                                        viewModel.setGenerationFilter(null)
+                                                        generationDropdownExpanded = false
+                                                },
+                                                trailingIcon = {
+                                                        if (selectedGeneration == null)
+                                                                Icon(
+                                                                        Icons.Default.Check,
+                                                                        contentDescription = null,
+                                                                        tint =
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .primary,
+                                                                        modifier =
+                                                                                Modifier.size(18.dp)
+                                                                )
+                                                }
+                                        )
+                                        HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 12.dp)
+                                        )
+                                        availableGenerations.forEach { gen ->
+                                                DropdownMenuItem(
+                                                        text = {
+                                                                Text(
+                                                                        gen,
+                                                                        fontWeight =
+                                                                                if (selectedGeneration ==
+                                                                                                gen
+                                                                                )
+                                                                                        FontWeight
+                                                                                                .Bold
+                                                                                else
+                                                                                        FontWeight
+                                                                                                .Normal
+                                                                )
+                                                        },
+                                                        onClick = {
+                                                                viewModel.setGenerationFilter(gen)
+                                                                generationDropdownExpanded = false
+                                                        },
+                                                        trailingIcon = {
+                                                                if (selectedGeneration == gen)
+                                                                        Icon(
+                                                                                Icons.Default.Check,
+                                                                                contentDescription =
+                                                                                        null,
+                                                                                tint =
+                                                                                        MaterialTheme
+                                                                                                .colorScheme
+                                                                                                .primary,
+                                                                                modifier =
+                                                                                        Modifier.size(
+                                                                                                18.dp
+                                                                                        )
+                                                                        )
+                                                        }
+                                                )
+                                        }
+                                }
+                        }
+
+                        // Type Dropdown
+                        Box(modifier = Modifier.weight(1f)) {
+                                val typeRotation by
+                                        animateFloatAsState(
+                                                targetValue =
+                                                        if (typeDropdownExpanded) 180f else 0f,
+                                                animationSpec = tween(durationMillis = 250),
+                                                label = "typeArrow"
+                                        )
+                                Surface(
+                                        onClick = { typeDropdownExpanded = true },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(12.dp),
+                                        color =
+                                                MaterialTheme.colorScheme.secondaryContainer.copy(
+                                                        alpha = 0.5f
+                                                ),
+                                        border =
+                                                BorderStroke(
+                                                        1.dp,
+                                                        MaterialTheme.colorScheme.secondary.copy(
+                                                                alpha = 0.3f
+                                                        )
+                                                )
+                                ) {
+                                        Row(
+                                                modifier =
+                                                        Modifier.padding(
+                                                                horizontal = 14.dp,
+                                                                vertical = 12.dp
+                                                        ),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                                Text(
+                                                        text =
+                                                                selectedType?.replaceFirstChar {
+                                                                        it.uppercase()
+                                                                }
+                                                                        ?: "Tipo",
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        fontWeight =
+                                                                if (selectedType != null)
+                                                                        FontWeight.SemiBold
+                                                                else FontWeight.Normal,
+                                                        color =
+                                                                if (selectedType != null)
+                                                                        MaterialTheme.colorScheme
+                                                                                .onSecondaryContainer
+                                                                else
+                                                                        MaterialTheme.colorScheme
+                                                                                .onSurfaceVariant
+                                                )
+                                                Icon(
+                                                        imageVector =
+                                                                Icons.Default.KeyboardArrowDown,
+                                                        contentDescription = "Desplegar",
+                                                        tint = MaterialTheme.colorScheme.secondary,
+                                                        modifier =
+                                                                Modifier.size(20.dp)
+                                                                        .rotate(typeRotation)
+                                                )
+                                        }
+                                }
+                                DropdownMenu(
+                                        expanded = typeDropdownExpanded,
+                                        onDismissRequest = { typeDropdownExpanded = false },
+                                        modifier = Modifier.width(160.dp)
+                                ) {
+                                        DropdownMenuItem(
+                                                text = {
+                                                        Text(
+                                                                "Todos",
+                                                                fontWeight =
+                                                                        if (selectedType == null)
+                                                                                FontWeight.Bold
+                                                                        else FontWeight.Normal
+                                                        )
+                                                },
+                                                onClick = {
+                                                        viewModel.setTypeFilter(null)
+                                                        typeDropdownExpanded = false
+                                                },
+                                                trailingIcon = {
+                                                        if (selectedType == null)
+                                                                Icon(
+                                                                        Icons.Default.Check,
+                                                                        contentDescription = null,
+                                                                        tint =
+                                                                                MaterialTheme
+                                                                                        .colorScheme
+                                                                                        .primary,
+                                                                        modifier =
+                                                                                Modifier.size(18.dp)
+                                                                )
+                                                }
+                                        )
+                                        HorizontalDivider(
+                                                modifier = Modifier.padding(horizontal = 12.dp)
+                                        )
+                                        availableTypes.forEach { type ->
+                                                DropdownMenuItem(
+                                                        text = {
+                                                                Text(
+                                                                        type.replaceFirstChar {
+                                                                                it.uppercase()
+                                                                        },
+                                                                        fontWeight =
+                                                                                if (selectedType ==
+                                                                                                type
+                                                                                )
+                                                                                        FontWeight
+                                                                                                .Bold
+                                                                                else
+                                                                                        FontWeight
+                                                                                                .Normal
+                                                                )
+                                                        },
+                                                        onClick = {
+                                                                viewModel.setTypeFilter(type)
+                                                                typeDropdownExpanded = false
+                                                        },
+                                                        trailingIcon = {
+                                                                if (selectedType == type)
+                                                                        Icon(
+                                                                                Icons.Default.Check,
+                                                                                contentDescription =
+                                                                                        null,
+                                                                                tint =
+                                                                                        MaterialTheme
+                                                                                                .colorScheme
+                                                                                                .primary,
+                                                                                modifier =
+                                                                                        Modifier.size(
+                                                                                                18.dp
+                                                                                        )
+                                                                        )
+                                                        }
+                                                )
+                                        }
+                                }
+                        }
+                }
 
                 if (isLoading) {
                         Box(
