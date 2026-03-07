@@ -72,7 +72,7 @@ fun MainScreen(
                 composable(BottomNavItem.Pokedex.route) {
                     PokedexScreen(onPokemonClick = onPokemonClick)
                 }
-                composable(BottomNavItem.Profile.route) { ProfileScreen(onLogout = onLogoutClick) }
+                composable(BottomNavItem.Profile.route) { ProfileScreen(onLogoutClick = onLogoutClick) }
             }
 
             // CAPA 2: El degradado decorativo (Detrás de la barra)
