@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.pfinal_pokezona_gabriel_jorge.data.model.GameResult
 import com.example.pfinal_pokezona_gabriel_jorge.data.network.RetrofitInstance
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,22 +19,58 @@ class GamesViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+
+    private val _completedGamesIds = MutableStateFlow<Set<String>>(emptySet())
+    val completedGamesIds: StateFlow<Set<String>> = _completedGamesIds.asStateFlow()
+
     // Lista exacta de las versiones de la saga principal (como las llama la PokéAPI)
-    private val mainSeriesGames = listOf(
-        "red", "blue", "yellow",
-        "gold", "silver", "crystal",
-        "ruby", "sapphire", "emerald", "firered", "leafgreen",
-        "diamond", "pearl", "platinum", "heartgold", "soulsilver",
-        "black", "white", "black-2", "white-2",
-        "x", "y", "omega-ruby", "alpha-sapphire",
-        "sun", "moon", "ultra-sun", "ultra-moon",
-        "lets-go-pikachu", "lets-go-eevee",
-        "sword", "shield", "brilliant-diamond", "shining-pearl", "legends-arceus",
-        "scarlet", "violet", "legends-z-a"
-    )
+    private val mainSeriesGames =
+            listOf(
+                    "red",
+                    "blue",
+                    "yellow",
+                    "gold",
+                    "silver",
+                    "crystal",
+                    "ruby",
+                    "sapphire",
+                    "emerald",
+                    "firered",
+                    "leafgreen",
+                    "diamond",
+                    "pearl",
+                    "platinum",
+                    "heartgold",
+                    "soulsilver",
+                    "black",
+                    "white",
+                    "black-2",
+                    "white-2",
+                    "x",
+                    "y",
+                    "omega-ruby",
+                    "alpha-sapphire",
+                    "sun",
+                    "moon",
+                    "ultra-sun",
+                    "ultra-moon",
+                    "lets-go-pikachu",
+                    "lets-go-eevee",
+                    "sword",
+                    "shield",
+                    "brilliant-diamond",
+                    "shining-pearl",
+                    "legends-arceus",
+                    "scarlet",
+                    "violet",
+                    "legends-z-a"
+            )
 
     init {
         fetchGames()
+        fetchCompletedGames()
     }
 
     private fun fetchGames() {
@@ -44,9 +82,8 @@ class GamesViewModel : ViewModel() {
                 val response = RetrofitInstance.api.getGames(limit = 100)
 
                 // Filtramos los resultados: solo nos quedamos con los que estén en nuestra lista
-                val filteredList = response.results.filter { game ->
-                    mainSeriesGames.contains(game.name)
-                }
+                val filteredList =
+                        response.results.filter { game -> mainSeriesGames.contains(game.name) }
 
                 _games.value = filteredList
             } catch (e: Exception) {
@@ -54,6 +91,30 @@ class GamesViewModel : ViewModel() {
             } finally {
                 _isLoading.value = false
             }
+        }
+    }
+
+    private fun fetchCompletedGames() {
+        val userId = auth.currentUser?.uid ?: return
+
+        mainSeriesGames.forEach { gameId ->
+            db.collection("users")
+                    .document(userId)
+                    .collection("games")
+                    .document(gameId)
+                    .collection("teams")
+                    .limit(1)
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) return@addSnapshotListener
+
+                        val currentSet = _completedGamesIds.value.toMutableSet()
+                        if (snapshot != null && !snapshot.isEmpty) {
+                            currentSet.add(gameId)
+                        } else {
+                            currentSet.remove(gameId)
+                        }
+                        _completedGamesIds.value = currentSet
+                    }
         }
     }
 }

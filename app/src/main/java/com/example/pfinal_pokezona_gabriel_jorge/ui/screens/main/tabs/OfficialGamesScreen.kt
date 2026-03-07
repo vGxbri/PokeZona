@@ -1,11 +1,11 @@
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
 import androidx.compose.foundation.BorderStroke // <-- Importante
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -27,24 +27,23 @@ import coil.request.ImageRequest
 import com.example.pfinal_pokezona_gabriel_jorge.data.repository.GameRepository
 
 @Composable
-fun OfficialGamesScreen(
-    onGameClick: (String) -> Unit,
-    viewModel: GamesViewModel = viewModel()
-) {
+fun OfficialGamesScreen(onGameClick: (String) -> Unit, viewModel: GamesViewModel = viewModel()) {
     val games by viewModel.games.collectAsState()
+    val completedGamesIds by viewModel.completedGamesIds.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Juegos Oficiales",
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.ExtraBold
-            ),
-            // APLICAMOS TU COLOR PRIMARIO AL TÍTULO
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
+                text = "Juegos Oficiales",
+                style =
+                        MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.ExtraBold
+                        ),
+                // APLICAMOS TU COLOR PRIMARIO AL TÍTULO
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
         )
 
         if (isLoading) {
@@ -53,16 +52,44 @@ fun OfficialGamesScreen(
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
         } else {
+            val completedGames = games.filter { completedGamesIds.contains(it.name) }
+
             LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalItemSpacing = 16.dp,
-                contentPadding = PaddingValues(bottom = 140.dp)
+                    columns = StaggeredGridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalItemSpacing = 16.dp,
+                    contentPadding = PaddingValues(bottom = 140.dp)
             ) {
-                items(
-                    items = games,
-                    key = { game -> game.name }
-                ) { game ->
+                if (completedGames.isNotEmpty()) {
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        Text(
+                                text = "Juegos Completados",
+                                style =
+                                        MaterialTheme.typography.titleLarge.copy(
+                                                fontWeight = FontWeight.Bold
+                                        ),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+                        )
+                    }
+                    items(items = completedGames, key = { game -> "completed_${game.name}" }) { game
+                        ->
+                        GameCard(gameName = game.name, onClick = { onGameClick(game.name) })
+                    }
+                }
+
+                item(span = StaggeredGridItemSpan.FullLine) {
+                    Text(
+                            text = "Todos los Juegos",
+                            style =
+                                    MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                    ),
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.padding(bottom = 8.dp, top = 16.dp)
+                    )
+                }
+                items(items = games, key = { game -> "all_${game.name}" }) { game ->
                     GameCard(gameName = game.name, onClick = { onGameClick(game.name) })
                 }
             }
@@ -72,51 +99,49 @@ fun OfficialGamesScreen(
 
 @Composable
 fun GameCard(gameName: String, onClick: () -> Unit) {
-    val displayName = remember(gameName) {
-        gameName.replace("-", " ").split(" ").joinToString(" ") {
-            it.replaceFirstChar { char -> char.uppercase() }
-        }
-    }
+    val displayName =
+            remember(gameName) {
+                gameName.replace("-", " ").split(" ").joinToString(" ") {
+                    it.replaceFirstChar { char -> char.uppercase() }
+                }
+            }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape = RoundedCornerShape(
-            topStart = 4.dp,
-            topEnd = 4.dp,
-            bottomEnd = 12.dp,
-            bottomStart = 12.dp
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+            modifier = Modifier.fillMaxWidth().clickable { onClick() },
+            shape =
+                    RoundedCornerShape(
+                            topStart = 4.dp,
+                            topEnd = 4.dp,
+                            bottomEnd = 12.dp,
+                            bottomStart = 12.dp
+                    ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(GameRepository.getCover(gameName))
-                    .crossfade(true)
-                    .size(coil.size.Size.ORIGINAL)
-                    .build(),
-                contentDescription = "Portada de $displayName",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxWidth()
+                    model =
+                            ImageRequest.Builder(LocalContext.current)
+                                    .data(GameRepository.getCover(gameName))
+                                    .crossfade(true)
+                                    .size(coil.size.Size.ORIGINAL)
+                                    .build(),
+                    contentDescription = "Portada de $displayName",
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth()
             )
 
             Text(
-                text = displayName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface, // Color del texto dinámico
-                modifier = Modifier.padding(12.dp)
+                    text = displayName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface, // Color del texto dinámico
+                    modifier = Modifier.padding(12.dp)
             )
         }
     }
