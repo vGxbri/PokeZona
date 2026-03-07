@@ -20,6 +20,42 @@ class PokedexViewModel : ViewModel() {
     private val _pokemons = MutableStateFlow<List<PokemonResult>>(emptyList())
     val pokemons: StateFlow<List<PokemonResult>> = _pokemons.asStateFlow()
 
+    private val _filteredPokemons = MutableStateFlow<List<PokemonResult>>(emptyList())
+    val filteredPokemons: StateFlow<List<PokemonResult>> = _filteredPokemons.asStateFlow()
+
+    private val _selectedGeneration = MutableStateFlow<String?>(null)
+    val selectedGeneration: StateFlow<String?> = _selectedGeneration.asStateFlow()
+
+    private val _selectedType = MutableStateFlow<String?>(null)
+    val selectedType: StateFlow<String?> = _selectedType.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val availableGenerations =
+            listOf("Gen 1", "Gen 2", "Gen 3", "Gen 4", "Gen 5", "Gen 6", "Gen 7", "Gen 8", "Gen 9")
+    val availableTypes =
+            listOf(
+                    "normal",
+                    "fire",
+                    "water",
+                    "grass",
+                    "electric",
+                    "ice",
+                    "fighting",
+                    "poison",
+                    "ground",
+                    "flying",
+                    "psychic",
+                    "bug",
+                    "rock",
+                    "ghost",
+                    "dragon",
+                    "dark",
+                    "steel",
+                    "fairy"
+            )
+
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
@@ -36,15 +72,14 @@ class PokedexViewModel : ViewModel() {
         val userId = auth.currentUser?.uid ?: return
 
         // Escuchamos el documento del usuario en tiempo real
-        db.collection("users").document(userId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) return@addSnapshotListener
-                if (snapshot != null && snapshot.exists()) {
-                    // Extraemos la lista de favoritos de Firestore
-                    val favs = snapshot.get("favorites") as? List<String> ?: emptyList()
-                    _favoritePokemons.value = favs.toSet()
-                }
+        db.collection("users").document(userId).addSnapshotListener { snapshot, error ->
+            if (error != null) return@addSnapshotListener
+            if (snapshot != null && snapshot.exists()) {
+                // Extraemos la lista de favoritos de Firestore
+                val favs = snapshot.get("favorites") as? List<String> ?: emptyList()
+                _favoritePokemons.value = favs.toSet()
             }
+        }
     }
 
     fun toggleFavorite(pokemonName: String) {
@@ -62,9 +97,11 @@ class PokedexViewModel : ViewModel() {
         _favoritePokemons.value = currentFavs
 
         // 2. Guardamos en Firebase en segundo plano
-        // Usamos SetOptions.merge() para que cree el documento si el usuario es nuevo y aún no tiene uno
-        db.collection("users").document(userId)
-            .set(hashMapOf("favorites" to currentFavs.toList()), SetOptions.merge())
+        // Usamos SetOptions.merge() para que cree el documento si el usuario es nuevo y aún no
+        // tiene uno
+        db.collection("users")
+                .document(userId)
+                .set(hashMapOf("favorites" to currentFavs.toList()), SetOptions.merge())
     }
 
     private fun fetchPokemons() {
@@ -73,11 +110,76 @@ class PokedexViewModel : ViewModel() {
                 _isLoading.value = true
                 val response = RetrofitInstance.api.getPokemons(limit = 1500)
                 _pokemons.value = response.results
+                applyFilters() // Apply any initial filters
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    private fun applyFilters() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            var currentList = _pokemons.value
+
+            // Filtrar por generación
+            _selectedGeneration.value?.let { gen ->
+                val range =
+                        when (gen) {
+                            "Gen 1" -> 1..151
+                            "Gen 2" -> 152..251
+                            "Gen 3" -> 252..386
+                            "Gen 4" -> 387..493
+                            "Gen 5" -> 494..649
+                            "Gen 6" -> 650..721
+                            "Gen 7" -> 722..809
+                            "Gen 8" -> 810..905
+                            "Gen 9" -> 906..1025
+                            else -> 1..1500
+                        }
+                currentList =
+                        currentList.filter {
+                            val id = it.getPokemonId().toIntOrNull() ?: 0
+                            id in range
+                        }
+            }
+
+            // Filtrar por tipo
+            _selectedType.value?.let { type ->
+                try {
+                    val response = RetrofitInstance.api.getTypeDetail(type.lowercase())
+                    val validNames = response.pokemon.map { it.pokemon.name }.toSet()
+                    currentList = currentList.filter { it.name in validNames }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            // Filtrar por nombre de búsqueda
+            val query = _searchQuery.value.trim().lowercase()
+            if (query.isNotEmpty()) {
+                currentList = currentList.filter { it.name.lowercase().contains(query) }
+            }
+
+            _filteredPokemons.value = currentList
+            _isLoading.value = false
+        }
+    }
+
+    fun setGenerationFilter(gen: String?) {
+        _selectedGeneration.value = gen
+        applyFilters()
+    }
+
+    fun setTypeFilter(type: String?) {
+        _selectedType.value = type
+        applyFilters()
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+        applyFilters()
     }
 }
