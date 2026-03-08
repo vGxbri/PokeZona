@@ -54,6 +54,7 @@ class GameDetailViewModel : ViewModel() {
                                                                 String
                                                             ?: ""
                                                 )
+
                                             is String ->
                                                 SavedPokemon(
                                                     name = item,

@@ -33,9 +33,9 @@ import com.example.pfinal_pokezona_gabriel_jorge.data.model.translateTypeToSpani
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PokemonDetailScreen(
-        pokemonId: String,
-        onBackClick: () -> Unit,
-        viewModel: PokemonDetailViewModel = viewModel()
+    pokemonId: String,
+    onBackClick: () -> Unit,
+    viewModel: PokemonDetailViewModel = viewModel()
 ) {
     val pokemonDetail by viewModel.pokemonDetail.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -44,85 +44,90 @@ fun PokemonDetailScreen(
     LaunchedEffect(pokemonId) { viewModel.fetchPokemonDetail(pokemonId) }
 
     Scaffold(
-            topBar = {
-                TopAppBar(
-                        title = {
-                            Text(
-                                    text = pokemonId.replaceFirstChar { it.uppercase() },
-                                    fontWeight = FontWeight.Bold
-                            )
-                        },
-                        navigationIcon = {
-                            IconButton(onClick = { onBackClick() }) {
-                                Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = stringResource(R.string.back)
-                                )
-                            }
-                        },
-                        colors =
-                                TopAppBarDefaults.topAppBarColors(
-                                        containerColor = Color.Transparent
-                                )
-                )
-            }
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = pokemonId.replaceFirstChar { it.uppercase() },
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { onBackClick() }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back)
+                        )
+                    }
+                },
+                colors =
+                    TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.Transparent
+                    )
+            )
+        }
     ) { paddingValues ->
         if (isLoading || pokemonDetail == null) {
             Box(
-                    modifier = Modifier.fillMaxSize().padding(paddingValues),
-                    contentAlignment = Alignment.Center
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
             ) { CircularProgressIndicator() }
         } else {
             val detail = pokemonDetail!!
 
             LazyColumn(
-                    modifier =
-                            Modifier.fillMaxSize()
-                                    .padding(paddingValues)
-                                    .padding(horizontal = 24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(horizontal = 24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item {
                     // Imagen del Pokémon en grande
                     val imageUrl =
-                            "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${detail.id}.png"
+                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${detail.id}.png"
                     AsyncImage(
-                            model =
-                                    ImageRequest.Builder(LocalContext.current)
-                                            .data(imageUrl)
-                                            .crossfade(true)
-                                            .build(),
-                            contentDescription = detail.name,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.size(220.dp).padding(16.dp)
+                        model =
+                            ImageRequest.Builder(LocalContext.current)
+                                .data(imageUrl)
+                                .crossfade(true)
+                                .build(),
+                        contentDescription = detail.name,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .size(220.dp)
+                            .padding(16.dp)
                     )
                 }
 
                 item {
                     // Tipos
                     Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.padding(bottom = 24.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(bottom = 24.dp)
                     ) {
                         detail.types.forEach { typeSlot ->
                             Surface(
-                                    shape = RoundedCornerShape(24.dp),
-                                    color = getTypeColor(typeSlot.type.name),
+                                shape = RoundedCornerShape(24.dp),
+                                color = getTypeColor(typeSlot.type.name),
                             ) {
                                 Text(
-                                        text =
-                                                typeSlot.type
-                                                        .name
-                                                        .translateTypeToSpanish()
-                                                        .uppercase(),
-                                        color = Color.White,
-                                        modifier =
-                                                Modifier.padding(
-                                                        horizontal = 16.dp,
-                                                        vertical = 6.dp
-                                                ),
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 14.sp
+                                    text =
+                                        typeSlot.type
+                                            .name
+                                            .translateTypeToSpanish()
+                                            .uppercase(),
+                                    color = Color.White,
+                                    modifier =
+                                        Modifier.padding(
+                                            horizontal = 16.dp,
+                                            vertical = 6.dp
+                                        ),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
                                 )
                             }
                         }
@@ -132,16 +137,18 @@ fun PokemonDetailScreen(
                 item {
                     // Información física del Pokémon
                     Row(
-                            modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp),
-                            horizontalArrangement = Arrangement.SpaceEvenly
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 32.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         InfoBox(
-                                title = stringResource(R.string.weight),
-                                value = "${detail.weight / 10f} KG"
+                            title = stringResource(R.string.weight),
+                            value = "${detail.weight / 10f} KG"
                         )
                         InfoBox(
-                                title = stringResource(R.string.height),
-                                value = "${detail.height / 10f} M"
+                            title = stringResource(R.string.height),
+                            value = "${detail.height / 10f} M"
                         )
                     }
                 }
@@ -151,11 +158,13 @@ fun PokemonDetailScreen(
                     val description by viewModel.pokemonDescription.collectAsState()
                     if (description.isNotEmpty()) {
                         Text(
-                                text = description,
-                                fontSize = 16.sp,
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-                                textAlign = TextAlign.Center,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = description,
+                            fontSize = 16.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 24.dp),
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -163,11 +172,13 @@ fun PokemonDetailScreen(
                 item {
                     // Estadísticas base del Pokémon
                     Text(
-                            text = stringResource(R.string.base_stats),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 22.sp,
-                            modifier = Modifier.padding(bottom = 16.dp).fillMaxWidth(),
-                            textAlign = TextAlign.Start
+                        text = stringResource(R.string.base_stats),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 22.sp,
+                        modifier = Modifier
+                            .padding(bottom = 16.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Start
                     )
                 }
 
@@ -176,22 +187,26 @@ fun PokemonDetailScreen(
                 item {
                     // Habilidades del Pokémon
                     Text(
-                            text = stringResource(R.string.abilities),
-                            fontWeight = FontWeight.ExtraBold,
-                            fontSize = 22.sp,
-                            modifier = Modifier.padding(top = 32.dp, bottom = 16.dp).fillMaxWidth(),
-                            textAlign = TextAlign.Start
+                        text = stringResource(R.string.abilities),
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 22.sp,
+                        modifier = Modifier
+                            .padding(top = 32.dp, bottom = 16.dp)
+                            .fillMaxWidth(),
+                        textAlign = TextAlign.Start
                     )
 
                     detail.abilities.forEach { abilitySlot ->
                         val hiddenText =
-                                if (abilitySlot.isHidden) stringResource(R.string.hidden_ability)
-                                else ""
+                            if (abilitySlot.isHidden) stringResource(R.string.hidden_ability)
+                            else ""
                         Text(
-                                text =
-                                        "• ${abilitySlot.ability.name.replaceFirstChar { it.uppercase() }}$hiddenText",
-                                fontSize = 18.sp,
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                            text =
+                                "• ${abilitySlot.ability.name.replaceFirstChar { it.uppercase() }}$hiddenText",
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(48.dp))
@@ -217,34 +232,39 @@ fun StatBar(stat: StatSlot) {
     LaunchedEffect(stat) { progress = targetProgress }
 
     val animatedProgress by
-            animateFloatAsState(
-                    targetValue = progress,
-                    animationSpec = tween(durationMillis = 1000),
-                    label = "StatProgress"
-            )
+    animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(durationMillis = 1000),
+        label = "StatProgress"
+    )
 
     Row(
-            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-                text = formatStatName(stat.stat.name),
-                modifier = Modifier.weight(0.25f),
-                color = Color.Gray,
-                fontWeight = FontWeight.Bold,
-                fontSize = 14.sp
+            text = formatStatName(stat.stat.name),
+            modifier = Modifier.weight(0.25f),
+            color = Color.Gray,
+            fontWeight = FontWeight.Bold,
+            fontSize = 14.sp
         )
         Text(
-                text = stat.baseStat.toString().padStart(3, '0'),
-                modifier = Modifier.weight(0.15f),
-                fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+            text = stat.baseStat.toString().padStart(3, '0'),
+            modifier = Modifier.weight(0.15f),
+            fontWeight = FontWeight.Bold,
+            fontSize = 16.sp
         )
         LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier.weight(0.6f).height(10.dp).clip(RoundedCornerShape(5.dp)),
-                color = getStatColor(stat.baseStat),
-                trackColor = MaterialTheme.colorScheme.surfaceVariant
+            progress = { animatedProgress },
+            modifier = Modifier
+                .weight(0.6f)
+                .height(10.dp)
+                .clip(RoundedCornerShape(5.dp)),
+            color = getStatColor(stat.baseStat),
+            trackColor = MaterialTheme.colorScheme.surfaceVariant
         )
     }
 }

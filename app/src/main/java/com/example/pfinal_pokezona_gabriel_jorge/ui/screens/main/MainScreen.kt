@@ -39,48 +39,50 @@ import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs.PokedexScr
 import com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs.ProfileScreen
 
 sealed class BottomNavItem(
-        val route: String,
-        @StringRes val titleRes: Int,
-        @DrawableRes val icon: Int,
-        @DrawableRes val selectedIcon: Int
+    val route: String,
+    @StringRes val titleRes: Int,
+    @DrawableRes val icon: Int,
+    @DrawableRes val selectedIcon: Int
 ) {
     object Games :
-            BottomNavItem(
-                    "games",
-                    R.string.games,
-                    R.drawable.game_controller,
-                    R.drawable.game_controller_fill
-            )
+        BottomNavItem(
+            "games",
+            R.string.games,
+            R.drawable.game_controller,
+            R.drawable.game_controller_fill
+        )
 
     object Pokedex :
-            BottomNavItem(
-                    "pokedex",
-                    R.string.pokedex,
-                    R.drawable.pokeball,
-                    R.drawable.pokeball_fill
-            )
+        BottomNavItem(
+            "pokedex",
+            R.string.pokedex,
+            R.drawable.pokeball,
+            R.drawable.pokeball_fill
+        )
 
     object Profile :
-            BottomNavItem("profile", R.string.profile, R.drawable.user, R.drawable.user_fill)
+        BottomNavItem("profile", R.string.profile, R.drawable.user, R.drawable.user_fill)
 }
 
 @Composable
 fun MainScreen(
-        onGameClick: (String) -> Unit,
-        onPokemonClick: (String) -> Unit,
-        onLogoutClick: () -> Unit
+    onGameClick: (String) -> Unit,
+    onPokemonClick: (String) -> Unit,
+    onLogoutClick: () -> Unit
 ) {
     val navController = rememberNavController()
     val items = listOf(BottomNavItem.Games, BottomNavItem.Pokedex, BottomNavItem.Profile)
 
     Scaffold { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)) {
 
             // Pantallas
             NavHost(
-                    navController = navController,
-                    startDestination = BottomNavItem.Games.route,
-                    modifier = Modifier.fillMaxSize()
+                navController = navController,
+                startDestination = BottomNavItem.Games.route,
+                modifier = Modifier.fillMaxSize()
             ) {
                 composable(BottomNavItem.Games.route) {
                     OfficialGamesScreen(onGameClick = onGameClick)
@@ -95,113 +97,118 @@ fun MainScreen(
 
             // Degradado detrás de la barra de navegación
             Box(
-                    modifier =
-                            Modifier.align(Alignment.BottomCenter)
-                                    .fillMaxWidth()
-                                    .height(180.dp)
-                                    .background(
-                                            Brush.verticalGradient(
-                                                    colors =
-                                                            listOf(
-                                                                    Color.Transparent,
-                                                                    MaterialTheme.colorScheme
-                                                                            .background
-                                                            )
-                                            )
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                colors =
+                                    listOf(
+                                        Color.Transparent,
+                                        MaterialTheme.colorScheme
+                                            .background
                                     )
+                            )
+                        )
             )
 
             // Barra de navegación flotante
             Surface(
-                    modifier =
-                            Modifier.align(Alignment.BottomCenter)
-                                    .padding(horizontal = 24.dp)
-                                    .padding(bottom = 24.dp)
-                                    .border(
-                                            width = 1.dp,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            shape = RoundedCornerShape(32.dp)
-                                    ),
-                    shape = RoundedCornerShape(28.dp),
-                    shadowElevation = 12.dp,
-                    tonalElevation = 0.dp,
-                    color = MaterialTheme.colorScheme.surface
+                modifier =
+                    Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 24.dp)
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(32.dp)
+                        ),
+                shape = RoundedCornerShape(28.dp),
+                shadowElevation = 12.dp,
+                tonalElevation = 0.dp,
+                color = MaterialTheme.colorScheme.surface
             ) {
                 NavigationBar(
-                        modifier = Modifier.height(64.dp).padding(horizontal = 8.dp),
-                        containerColor = Color.Transparent,
-                        tonalElevation = 0.dp,
-                        windowInsets = WindowInsets(0.dp)
+                    modifier = Modifier
+                        .height(64.dp)
+                        .padding(horizontal = 8.dp),
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp,
+                    windowInsets = WindowInsets(0.dp)
                 ) {
                     val navBackStackEntry by navController.currentBackStackEntryAsState()
                     val currentDestination = navBackStackEntry?.destination
 
                     items.forEach { item ->
                         val selected =
-                                currentDestination?.hierarchy?.any { it.route == item.route } ==
-                                        true
+                            currentDestination?.hierarchy?.any { it.route == item.route } ==
+                                    true
 
                         val pillWidth by
-                                animateDpAsState(
-                                        targetValue = if (selected) 64.dp else 32.dp,
-                                        label = "pillWidth"
-                                )
+                        animateDpAsState(
+                            targetValue = if (selected) 64.dp else 32.dp,
+                            label = "pillWidth"
+                        )
                         val pillColor by
-                                animateColorAsState(
-                                        targetValue =
-                                                if (selected) MaterialTheme.colorScheme.primary
-                                                else Color.Transparent,
-                                        label = "pillColor"
-                                )
+                        animateColorAsState(
+                            targetValue =
+                                if (selected) MaterialTheme.colorScheme.primary
+                                else Color.Transparent,
+                            label = "pillColor"
+                        )
 
                         NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(item.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
                                     }
-                                },
-                                colors =
-                                        NavigationBarItemDefaults.colors(
-                                                indicatorColor = Color.Transparent,
-                                                selectedIconColor =
-                                                        MaterialTheme.colorScheme.background,
-                                                unselectedIconColor =
-                                                        MaterialTheme.colorScheme.onBackground.copy(
-                                                                alpha = 0.5f
-                                                        )
-                                        ),
-                                icon = {
-                                    Box(
-                                            contentAlignment = Alignment.Center,
-                                            modifier =
-                                                    Modifier.height(40.dp)
-                                                            .width(pillWidth)
-                                                            .background(
-                                                                    color = pillColor,
-                                                                    shape =
-                                                                            RoundedCornerShape(
-                                                                                    20.dp
-                                                                            )
-                                                            )
-                                    ) {
-                                        Icon(
-                                                modifier = Modifier.size(32.dp),
-                                                painter =
-                                                        painterResource(
-                                                                id =
-                                                                        if (selected)
-                                                                                item.selectedIcon
-                                                                        else item.icon
-                                                        ),
-                                                contentDescription = stringResource(item.titleRes)
-                                        )
-                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
+                            },
+                            colors =
+                                NavigationBarItemDefaults.colors(
+                                    indicatorColor = Color.Transparent,
+                                    selectedIconColor =
+                                        MaterialTheme.colorScheme.background,
+                                    unselectedIconColor =
+                                        MaterialTheme.colorScheme.onBackground.copy(
+                                            alpha = 0.5f
+                                        )
+                                ),
+                            icon = {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier =
+                                        Modifier
+                                            .height(40.dp)
+                                            .width(pillWidth)
+                                            .background(
+                                                color = pillColor,
+                                                shape =
+                                                    RoundedCornerShape(
+                                                        20.dp
+                                                    )
+                                            )
+                                ) {
+                                    Icon(
+                                        modifier = Modifier.size(32.dp),
+                                        painter =
+                                            painterResource(
+                                                id =
+                                                    if (selected)
+                                                        item.selectedIcon
+                                                    else item.icon
+                                            ),
+                                        contentDescription = stringResource(item.titleRes)
+                                    )
+                                }
+                            }
                         )
                     }
                 }
