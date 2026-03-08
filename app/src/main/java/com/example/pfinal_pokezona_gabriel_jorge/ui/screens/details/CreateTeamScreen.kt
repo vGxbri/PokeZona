@@ -1,3 +1,5 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details
 
 import androidx.compose.foundation.BorderStroke
@@ -44,7 +46,7 @@ fun CreateTeamScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
 
-    // Si se guarda con éxito, volvemos atrás automáticamente
+    // Si se guarda con éxito, volvemos atrás
     LaunchedEffect(saveSuccess) {
         if (saveSuccess) onBackClick()
     }
@@ -59,7 +61,7 @@ fun CreateTeamScreen(
                     }
                 },
                 actions = {
-                    // Botón de guardar (se desactiva si no hay 6)
+                    // Botón de guardar (solo si el equipo está completo)
                     TextButton(
                         onClick = { viewModel.saveTeamToFirebase(gameId) },
                         enabled = selectedTeam.size == 6 && !isLoading
@@ -75,7 +77,7 @@ fun CreateTeamScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 1. EL BUSCADOR
+            // Buscador de Pokémon para añadir al equipo
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { viewModel.updateSearchText(it) },
@@ -88,12 +90,16 @@ fun CreateTeamScreen(
                 singleLine = true
             )
 
-            // 2. LOS 6 HUECOS DEL EQUIPO
+            // 6 huecos del equipo Pokémon
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(
+                        alpha = 0.5f
+                    )
+                )
             ) {
                 Row(
                     modifier = Modifier
@@ -113,27 +119,32 @@ fun CreateTeamScreen(
                         ) {
                             if (pokemon != null) {
                                 AsyncImage(
-                                    model = ImageRequest.Builder(LocalContext.current).data(pokemon.getSpriteUrl()).build(),
+                                    model = ImageRequest.Builder(LocalContext.current)
+                                        .data(pokemon.getSpriteUrl()).build(),
                                     contentDescription = pokemon.name,
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
                                 )
                             } else {
-                                Icon(Icons.Default.Add, contentDescription = "Añadir", tint = Color.Gray)
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = "Añadir",
+                                    tint = Color.Gray
+                                )
                             }
                         }
                     }
                 }
             }
 
-            // 3. LA CUADRÍCULA PARA ELEGIR
+            // Pokémons a elegir
             if (isLoading && filteredPokemons.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(3), // 3 columnas para que quepan más al buscar
+                    columns = GridCells.Fixed(3),
                     contentPadding = PaddingValues(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -181,7 +192,9 @@ fun SelectablePokemonCard(
                     imageVector = Icons.Default.Favorite,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.align(Alignment.TopEnd).size(16.dp)
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(16.dp)
                 )
             }
 

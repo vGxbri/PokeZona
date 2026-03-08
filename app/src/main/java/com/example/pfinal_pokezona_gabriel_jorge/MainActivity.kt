@@ -1,3 +1,5 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge
 
 import android.os.Bundle

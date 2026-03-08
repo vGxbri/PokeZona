@@ -1,3 +1,5 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
 import androidx.lifecycle.ViewModel
@@ -25,48 +27,48 @@ class GamesViewModel : ViewModel() {
     private val _completedGamesIds = MutableStateFlow<Set<String>>(emptySet())
     val completedGamesIds: StateFlow<Set<String>> = _completedGamesIds.asStateFlow()
 
-    // Lista exacta de las versiones de la saga principal (como las llama la PokéAPI)
+    // Lista de los juegos de la saga principal
     private val mainSeriesGames =
-            listOf(
-                    "red",
-                    "blue",
-                    "yellow",
-                    "gold",
-                    "silver",
-                    "crystal",
-                    "ruby",
-                    "sapphire",
-                    "emerald",
-                    "firered",
-                    "leafgreen",
-                    "diamond",
-                    "pearl",
-                    "platinum",
-                    "heartgold",
-                    "soulsilver",
-                    "black",
-                    "white",
-                    "black-2",
-                    "white-2",
-                    "x",
-                    "y",
-                    "omega-ruby",
-                    "alpha-sapphire",
-                    "sun",
-                    "moon",
-                    "ultra-sun",
-                    "ultra-moon",
-                    "lets-go-pikachu",
-                    "lets-go-eevee",
-                    "sword",
-                    "shield",
-                    "brilliant-diamond",
-                    "shining-pearl",
-                    "legends-arceus",
-                    "scarlet",
-                    "violet",
-                    "legends-z-a"
-            )
+        listOf(
+            "red",
+            "blue",
+            "yellow",
+            "gold",
+            "silver",
+            "crystal",
+            "ruby",
+            "sapphire",
+            "emerald",
+            "firered",
+            "leafgreen",
+            "diamond",
+            "pearl",
+            "platinum",
+            "heartgold",
+            "soulsilver",
+            "black",
+            "white",
+            "black-2",
+            "white-2",
+            "x",
+            "y",
+            "omega-ruby",
+            "alpha-sapphire",
+            "sun",
+            "moon",
+            "ultra-sun",
+            "ultra-moon",
+            "lets-go-pikachu",
+            "lets-go-eevee",
+            "sword",
+            "shield",
+            "brilliant-diamond",
+            "shining-pearl",
+            "legends-arceus",
+            "scarlet",
+            "violet",
+            "legends-z-a"
+        )
 
     init {
         fetchGames()
@@ -78,12 +80,11 @@ class GamesViewModel : ViewModel() {
             try {
                 _isLoading.value = true
 
-                // Pedimos 100 juegos para asegurarnos de que llegamos hasta Escarlata y Púrpura
                 val response = RetrofitInstance.api.getGames(limit = 100)
 
-                // Filtramos los resultados: solo nos quedamos con los que estén en nuestra lista
+                // Filtramos los resultados para quedarnos con los de nuestra lista
                 val filteredList =
-                        response.results.filter { game -> mainSeriesGames.contains(game.name) }
+                    response.results.filter { game -> mainSeriesGames.contains(game.name) }
 
                 _games.value = filteredList
             } catch (e: Exception) {
@@ -99,22 +100,22 @@ class GamesViewModel : ViewModel() {
 
         mainSeriesGames.forEach { gameId ->
             db.collection("users")
-                    .document(userId)
-                    .collection("games")
-                    .document(gameId)
-                    .collection("teams")
-                    .limit(1)
-                    .addSnapshotListener { snapshot, error ->
-                        if (error != null) return@addSnapshotListener
+                .document(userId)
+                .collection("games")
+                .document(gameId)
+                .collection("teams")
+                .limit(1)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) return@addSnapshotListener
 
-                        val currentSet = _completedGamesIds.value.toMutableSet()
-                        if (snapshot != null && !snapshot.isEmpty) {
-                            currentSet.add(gameId)
-                        } else {
-                            currentSet.remove(gameId)
-                        }
-                        _completedGamesIds.value = currentSet
+                    val currentSet = _completedGamesIds.value.toMutableSet()
+                    if (snapshot != null && !snapshot.isEmpty) {
+                        currentSet.add(gameId)
+                    } else {
+                        currentSet.remove(gameId)
                     }
+                    _completedGamesIds.value = currentSet
+                }
         }
     }
 }

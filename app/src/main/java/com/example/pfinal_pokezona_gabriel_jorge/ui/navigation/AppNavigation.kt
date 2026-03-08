@@ -1,3 +1,5 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge.ui.navigation
 
 import androidx.compose.runtime.Composable
@@ -24,7 +26,7 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
     val navController = rememberNavController()
     val authState by authViewModel.authState.collectAsState()
 
-    // Redirigir al Login si la sesión se cierra (authState pasa a Idle)
+    // Si la sesión se cierra, redirigimos al inicio de sesión
     LaunchedEffect(authState) {
         if (authState is AuthState.Idle) {
             navController.navigate("login") { popUpTo(0) { inclusive = true } }
@@ -54,16 +56,13 @@ fun AppNavigation(authViewModel: AuthViewModel = viewModel()) {
             )
         }
         composable("main") {
-            // Obtenemos el contexto de la pantalla
             val context = androidx.compose.ui.platform.LocalContext.current
 
             MainScreen(
-                // Llama a "gameDetail"
                 onGameClick = { gameId -> navController.navigate("gameDetail/$gameId") },
                 onPokemonClick = { pokemonId ->
                     navController.navigate("pokemonDetail/$pokemonId")
                 },
-                // Le pasamos el contexto al ViewModel al hacer click
                 onLogoutClick = { authViewModel.signOut(context) }
             )
         }

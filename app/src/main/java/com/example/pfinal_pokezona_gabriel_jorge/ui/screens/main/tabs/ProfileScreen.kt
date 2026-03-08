@@ -1,3 +1,5 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
 import androidx.compose.animation.AnimatedVisibility
@@ -49,793 +51,812 @@ import com.example.pfinal_pokezona_gabriel_jorge.data.repository.GameRepository
 
 @Composable
 fun ProfileScreen(onLogoutClick: () -> Unit, viewModel: ProfileViewModel = viewModel()) {
-        val avatarPokemonId by viewModel.avatarPokemonId.collectAsState()
-        val userName by viewModel.userName.collectAsState()
-        val topGames by viewModel.topGames.collectAsState()
-        val topPokemons by viewModel.topPokemons.collectAsState()
-        val isLoading by viewModel.isLoading.collectAsState()
-        val passwordResetResult by viewModel.passwordResetResult.collectAsState()
+    val avatarPokemonId by viewModel.avatarPokemonId.collectAsState()
+    val userName by viewModel.userName.collectAsState()
+    val topGames by viewModel.topGames.collectAsState()
+    val topPokemons by viewModel.topPokemons.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val passwordResetResult by viewModel.passwordResetResult.collectAsState()
 
-        var showAvatarPicker by remember { mutableStateOf(false) }
-        var showLogoutDialog by remember { mutableStateOf(false) }
-        var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showAvatarPicker by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
 
-        val snackbarHostState = remember { SnackbarHostState() }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-        // Snackbar para el resultado de cambiar contraseña
-        LaunchedEffect(passwordResetResult) {
-                passwordResetResult?.let {
-                        snackbarHostState.showSnackbar(it)
-                        viewModel.clearPasswordResetResult()
-                }
+    LaunchedEffect(passwordResetResult) {
+        passwordResetResult?.let {
+            snackbarHostState.showSnackbar(it)
+            viewModel.clearPasswordResetResult()
         }
+    }
 
-        LaunchedEffect(Unit) { viewModel.loadProfileData() }
+    LaunchedEffect(Unit) { viewModel.loadProfileData() }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-                // Fondo degradado
-                Box(
-                        modifier =
-                                Modifier.fillMaxWidth()
-                                        .height(320.dp)
-                                        .background(
-                                                Brush.verticalGradient(
-                                                        colors =
-                                                                listOf(
-                                                                        MaterialTheme.colorScheme
-                                                                                .primary,
-                                                                        MaterialTheme.colorScheme
-                                                                                .primary.copy(
-                                                                                alpha = 0.0f
-                                                                        ),
-                                                                        MaterialTheme.colorScheme
-                                                                                .background
-                                                                )
-                                                )
-                                        )
-                )
-
-                Column(
-                        modifier =
-                                Modifier.fillMaxSize()
-                                        .padding(horizontal = 16.dp)
-                                        .verticalScroll(rememberScrollState()),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Text(
-                                text = "Datos de Entrenador",
-                                style =
-                                        MaterialTheme.typography.headlineLarge.copy(
-                                                fontWeight = FontWeight.ExtraBold
+    Box(modifier = Modifier.fillMaxSize()) {
+        // Fondo degradado
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(320.dp)
+                    .background(
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(
+                                    MaterialTheme.colorScheme
+                                        .primary,
+                                    MaterialTheme.colorScheme
+                                        .primary.copy(
+                                            alpha = 0.0f
                                         ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                                    MaterialTheme.colorScheme
+                                        .background
+                                )
                         )
+                    )
+        )
 
-                        // ═══════ TARJETA DE ENTRENADOR ═══════
-                        ElevatedCard(
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(28.dp),
-                                elevation =
-                                        CardDefaults.elevatedCardElevation(
-                                                defaultElevation = 12.dp
-                                        ),
-                                colors =
-                                        CardDefaults.elevatedCardColors(
-                                                containerColor = MaterialTheme.colorScheme.surface
-                                        )
-                        ) {
-                                Column(
-                                        modifier = Modifier.fillMaxWidth().padding(24.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                        // Avatar
-                                        Box(
-                                                modifier = Modifier.size(120.dp),
-                                                contentAlignment = Alignment.BottomEnd
-                                        ) {
-                                                Box(
-                                                        modifier =
-                                                                Modifier.fillMaxSize()
-                                                                        .clip(CircleShape)
-                                                                        .background(
-                                                                                Brush.radialGradient(
-                                                                                        colors =
-                                                                                                listOf(
-                                                                                                        MaterialTheme
-                                                                                                                .colorScheme
-                                                                                                                .primary
-                                                                                                                .copy(
-                                                                                                                        alpha =
-                                                                                                                                0.1f
-                                                                                                                ),
-                                                                                                        MaterialTheme
-                                                                                                                .colorScheme
-                                                                                                                .surface
-                                                                                                )
-                                                                                )
-                                                                        )
-                                                                        .border(
-                                                                                3.dp,
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .primary
-                                                                                        .copy(
-                                                                                                alpha =
-                                                                                                        0.5f
-                                                                                        ),
-                                                                                CircleShape
-                                                                        ),
-                                                        contentAlignment = Alignment.Center
-                                                ) {
-                                                        AsyncImage(
-                                                                model =
-                                                                        "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$avatarPokemonId.png",
-                                                                contentDescription = "Avatar",
-                                                                modifier = Modifier.size(85.dp),
-                                                                contentScale = ContentScale.Fit
-                                                        )
-                                                }
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(24.dp))
 
-                                                IconButton(
-                                                        onClick = {
-                                                                viewModel.fetchAllPokemons()
-                                                                showAvatarPicker = true
-                                                        },
-                                                        modifier =
-                                                                Modifier.size(34.dp)
-                                                                        .background(
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .primary,
-                                                                                CircleShape
-                                                                        )
-                                                                        .border(
-                                                                                2.dp,
-                                                                                MaterialTheme
-                                                                                        .colorScheme
-                                                                                        .surface,
-                                                                                CircleShape
-                                                                        )
-                                                ) {
-                                                        Icon(
-                                                                Icons.Rounded.Edit,
-                                                                contentDescription =
-                                                                        "Editar avatar",
-                                                                tint = Color.White,
-                                                                modifier = Modifier.size(16.dp)
-                                                        )
-                                                }
-                                        }
+            Text(
+                text = "Datos de Entrenador",
+                style =
+                    MaterialTheme.typography.headlineLarge.copy(
+                        fontWeight = FontWeight.ExtraBold
+                    ),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
 
-                                        Spacer(modifier = Modifier.height(16.dp))
-
-                                        Text(
-                                                text = userName,
-                                                fontSize = 24.sp,
-                                                fontWeight = FontWeight.Black,
-                                                color = MaterialTheme.colorScheme.onSurface
-                                        )
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Surface(
-                                                color =
-                                                        MaterialTheme.colorScheme.primary.copy(
-                                                                alpha = 0.08f
+            // Entrenador
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                elevation =
+                    CardDefaults.elevatedCardElevation(
+                        defaultElevation = 12.dp
+                    ),
+                colors =
+                    CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Avatar
+                    Box(
+                        modifier = Modifier.size(120.dp),
+                        contentAlignment = Alignment.BottomEnd
+                    ) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors =
+                                                listOf(
+                                                    MaterialTheme
+                                                        .colorScheme
+                                                        .primary
+                                                        .copy(
+                                                            alpha =
+                                                                0.1f
                                                         ),
-                                                shape = RoundedCornerShape(12.dp)
-                                        ) {
-                                                Text(
-                                                        text = viewModel.userEmail,
-                                                        color =
-                                                                MaterialTheme.colorScheme.onSurface
-                                                                        .copy(alpha = 0.6f),
-                                                        fontSize = 13.sp,
-                                                        modifier =
-                                                                Modifier.padding(
-                                                                        horizontal = 12.dp,
-                                                                        vertical = 6.dp
-                                                                )
+                                                    MaterialTheme
+                                                        .colorScheme
+                                                        .surface
                                                 )
-                                        }
-                                }
-                        }
-
-                        Spacer(modifier = Modifier.height(28.dp))
-
-                        // ═══════ ESTADÍSTICAS ═══════
-                        if (isLoading && topGames.isEmpty()) {
-                                Spacer(modifier = Modifier.height(40.dp))
-                                CircularProgressIndicator(
-                                        color = MaterialTheme.colorScheme.primary,
-                                        strokeWidth = 3.dp
-                                )
-                        } else {
-                                // --- Juegos Más Jugados ---
-                                SectionHeader(title = "Juegos Más Jugados")
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                if (topGames.isEmpty()) {
-                                        EmptyStateCard(
-                                                message =
-                                                        "Todavía no has registrado ninguna aventura."
                                         )
-                                } else {
-                                        LazyRow(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                                contentPadding = PaddingValues(horizontal = 4.dp)
-                                        ) { items(topGames) { game -> GameStatCard(game.first) } }
-                                }
-
-                                Spacer(modifier = Modifier.height(28.dp))
-
-                                // --- Pokémon Más Usados ---
-                                SectionHeader(title = "Tus MVP (Más Usados)")
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                if (topPokemons.isEmpty()) {
-                                        EmptyStateCard(message = "Tus cajas del PC están vacías.")
-                                } else {
-                                        LazyRow(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.spacedBy(14.dp),
-                                                contentPadding = PaddingValues(horizontal = 4.dp)
-                                        ) {
-                                                items(topPokemons) { pokemon ->
-                                                        PokemonStatCard(pokemon)
-                                                }
-                                        }
-                                }
-                        }
-
-                        Spacer(modifier = Modifier.height(36.dp))
-
-                        // ═══════ AJUSTES DE CUENTA ═══════
-                        SectionHeader(title = "Ajustes de Cuenta")
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        // Solo mostrar "Cambiar Contraseña" si NO es cuenta de Google
-                        if (!viewModel.isGoogleAccount) {
-                                OutlinedButton(
-                                        onClick = { showChangePasswordDialog = true },
-                                        modifier = Modifier.fillMaxWidth().height(52.dp),
-                                        shape = RoundedCornerShape(16.dp),
-                                        colors =
-                                                ButtonDefaults.outlinedButtonColors(
-                                                        contentColor =
-                                                                MaterialTheme.colorScheme.onSurface
-                                                )
-                                ) {
-                                        Icon(
-                                                Icons.Default.LockReset,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(20.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(10.dp))
-                                        Text("Cambiar Contraseña", fontWeight = FontWeight.SemiBold)
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-                        }
-
-                        Button(
-                                onClick = { showLogoutDialog = true },
-                                modifier = Modifier.fillMaxWidth().height(52.dp),
-                                colors =
-                                        ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.error
-                                        ),
-                                shape = RoundedCornerShape(16.dp)
+                                    )
+                                    .border(
+                                        3.dp,
+                                        MaterialTheme
+                                            .colorScheme
+                                            .primary
+                                            .copy(
+                                                alpha =
+                                                    0.5f
+                                            ),
+                                        CircleShape
+                                    ),
+                            contentAlignment = Alignment.Center
                         ) {
-                                Icon(
-                                        Icons.Default.ExitToApp,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text("Cerrar Sesión", fontWeight = FontWeight.SemiBold)
+                            AsyncImage(
+                                model =
+                                    "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/$avatarPokemonId.png",
+                                contentDescription = "Avatar",
+                                modifier = Modifier.size(85.dp),
+                                contentScale = ContentScale.Fit
+                            )
                         }
 
-                        Spacer(modifier = Modifier.height(120.dp))
+                        IconButton(
+                            onClick = {
+                                viewModel.fetchAllPokemons()
+                                showAvatarPicker = true
+                            },
+                            modifier =
+                                Modifier
+                                    .size(34.dp)
+                                    .background(
+                                        MaterialTheme
+                                            .colorScheme
+                                            .primary,
+                                        CircleShape
+                                    )
+                                    .border(
+                                        2.dp,
+                                        MaterialTheme
+                                            .colorScheme
+                                            .surface,
+                                        CircleShape
+                                    )
+                        ) {
+                            Icon(
+                                Icons.Rounded.Edit,
+                                contentDescription =
+                                    "Editar avatar",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = userName,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Surface(
+                        color =
+                            MaterialTheme.colorScheme.primary.copy(
+                                alpha = 0.08f
+                            ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = viewModel.userEmail,
+                            color =
+                                MaterialTheme.colorScheme.onSurface
+                                    .copy(alpha = 0.6f),
+                            fontSize = 13.sp,
+                            modifier =
+                                Modifier.padding(
+                                    horizontal = 12.dp,
+                                    vertical = 6.dp
+                                )
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            // Estadísticas
+            if (isLoading && topGames.isEmpty()) {
+                Spacer(modifier = Modifier.height(40.dp))
+                CircularProgressIndicator(
+                    color = MaterialTheme.colorScheme.primary,
+                    strokeWidth = 3.dp
+                )
+            } else {
+                // Juegos más jugados
+                SectionHeader(title = "Juegos Más Jugados")
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (topGames.isEmpty()) {
+                    EmptyStateCard(
+                        message =
+                            "Todavía no has registrado ninguna aventura."
+                    )
+                } else {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) { items(topGames) { game -> GameStatCard(game.first) } }
                 }
 
-                // Snackbar host
-                SnackbarHost(
-                        hostState = snackbarHostState,
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
+                Spacer(modifier = Modifier.height(28.dp))
+
+                // Pokémons más usados
+                SectionHeader(title = "Tus MVP (Más Usados)")
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (topPokemons.isEmpty()) {
+                    EmptyStateCard(message = "Tus cajas del PC están vacías.")
+                } else {
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        items(topPokemons) { pokemon ->
+                            PokemonStatCard(pokemon)
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            // Ajustes del perfil
+            SectionHeader(title = "Ajustes de Cuenta")
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Si no es una cuenta de Google, mostramos cambiar contraseña
+            if (!viewModel.isGoogleAccount) {
+                OutlinedButton(
+                    onClick = { showChangePasswordDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors =
+                        ButtonDefaults.outlinedButtonColors(
+                            contentColor =
+                                MaterialTheme.colorScheme.onSurface
+                        )
+                ) {
+                    Icon(
+                        Icons.Default.LockReset,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text("Cambiar Contraseña", fontWeight = FontWeight.SemiBold)
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            Button(
+                onClick = { showLogoutDialog = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    ),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Icon(
+                    Icons.Default.ExitToApp,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
                 )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Cerrar Sesión", fontWeight = FontWeight.SemiBold)
+            }
+
+            Spacer(modifier = Modifier.height(120.dp))
         }
 
-        // ═══════ DIALOGO AVATAR PICKER ═══════
-        if (showAvatarPicker) {
-                AvatarPickerDialog(
-                        viewModel = viewModel,
-                        onDismiss = { showAvatarPicker = false },
-                        onSelect = { pokemonName ->
-                                viewModel.updateAvatar(pokemonName)
-                                showAvatarPicker = false
-                        }
-                )
-        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(16.dp)
+        )
+    }
 
-        // ═══════ DIALOGO CAMBIAR CONTRASEÑA ═══════
-        if (showChangePasswordDialog) {
-                ChangePasswordDialog(
-                        onDismiss = { showChangePasswordDialog = false },
-                        onConfirm = { currentPw, newPw, onError ->
-                                viewModel.changePassword(
-                                        currentPassword = currentPw,
-                                        newPassword = newPw,
-                                        onSuccess = { showChangePasswordDialog = false },
-                                        onError = { errorMsg -> onError(errorMsg) }
-                                )
-                        }
-                )
-        }
+    // Seleccionar avatar
+    if (showAvatarPicker) {
+        AvatarPickerDialog(
+            viewModel = viewModel,
+            onDismiss = { showAvatarPicker = false },
+            onSelect = { pokemonName ->
+                viewModel.updateAvatar(pokemonName)
+                showAvatarPicker = false
+            }
+        )
+    }
 
-        // ═══════ DIALOGO CONFIRMACIÓN LOGOUT ═══════
-        if (showLogoutDialog) {
-                AlertDialog(
-                        onDismissRequest = { showLogoutDialog = false },
-                        title = { Text("Cerrar Sesión", fontWeight = FontWeight.Bold) },
-                        text = {
-                                Text(
-                                        "¿Seguro que quieres cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta."
-                                )
-                        },
-                        confirmButton = {
-                                Button(
-                                        onClick = {
-                                                showLogoutDialog = false
-                                                onLogoutClick()
-                                        },
-                                        colors =
-                                                ButtonDefaults.buttonColors(
-                                                        containerColor =
-                                                                MaterialTheme.colorScheme.error
-                                                )
-                                ) { Text("Cerrar Sesión") }
-                        },
-                        dismissButton = {
-                                TextButton(onClick = { showLogoutDialog = false }) {
-                                        Text("Cancelar")
-                                }
-                        }
+    // Cambiar de contraseña
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            onDismiss = { showChangePasswordDialog = false },
+            onConfirm = { currentPw, newPw, onError ->
+                viewModel.changePassword(
+                    currentPassword = currentPw,
+                    newPassword = newPw,
+                    onSuccess = { showChangePasswordDialog = false },
+                    onError = { errorMsg -> onError(errorMsg) }
                 )
-        }
+            }
+        )
+    }
+
+    // Confirmación de cerrar sesión
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Cerrar Sesión", fontWeight = FontWeight.Bold) },
+            text = {
+                Text(
+                    "¿Seguro que quieres cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogoutClick()
+                    },
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor =
+                                MaterialTheme.colorScheme.error
+                        )
+                ) { Text("Cerrar Sesión") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
-// ═══════ AVATAR PICKER DIALOG ═══════
 
 @Composable
 fun AvatarPickerDialog(
-        viewModel: ProfileViewModel,
-        onDismiss: () -> Unit,
-        onSelect: (String) -> Unit
+    viewModel: ProfileViewModel,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
 ) {
-        val searchText by viewModel.avatarSearchText.collectAsState()
-        val filteredPokemons by viewModel.filteredPokemons.collectAsState()
-        val isLoadingList by viewModel.isPokemonListLoading.collectAsState()
+    val searchText by viewModel.avatarSearchText.collectAsState()
+    val filteredPokemons by viewModel.filteredPokemons.collectAsState()
+    val isLoadingList by viewModel.isPokemonListLoading.collectAsState()
 
-        Dialog(
-                onDismissRequest = onDismiss,
-                properties = DialogProperties(usePlatformDefaultWidth = false)
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.92f)
+                .fillMaxHeight(0.75f),
+            shape = RoundedCornerShape(28.dp),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
         ) {
-                Card(
-                        modifier = Modifier.fillMaxWidth(0.92f).fillMaxHeight(0.75f),
-                        shape = RoundedCornerShape(28.dp),
-                        colors =
-                                CardDefaults.cardColors(
-                                        containerColor = MaterialTheme.colorScheme.surface
-                                )
-                ) {
-                        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                                Text(
-                                        text = "Elige tu Pokémon",
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 22.sp,
-                                        modifier = Modifier.padding(bottom = 12.dp)
-                                )
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)) {
+                Text(
+                    text = "Elige tu Pokémon",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 22.sp,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
 
-                                // Buscador
-                                OutlinedTextField(
-                                        value = searchText,
-                                        onValueChange = { viewModel.updateAvatarSearchText(it) },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        placeholder = { Text("Buscar Pokémon...") },
-                                        leadingIcon = {
-                                                Icon(
-                                                        Icons.Default.Search,
-                                                        contentDescription = null
-                                                )
-                                        },
-                                        shape = RoundedCornerShape(24.dp),
-                                        singleLine = true
-                                )
+                // Buscador
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { viewModel.updateAvatarSearchText(it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Buscar Pokémon...") },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = null
+                        )
+                    },
+                    shape = RoundedCornerShape(24.dp),
+                    singleLine = true
+                )
 
-                                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-                                if (isLoadingList && filteredPokemons.isEmpty()) {
-                                        Box(
-                                                modifier = Modifier.fillMaxSize(),
-                                                contentAlignment = Alignment.Center
-                                        ) { CircularProgressIndicator() }
-                                } else {
-                                        LazyVerticalGrid(
-                                                columns = GridCells.Fixed(3),
-                                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                                modifier = Modifier.fillMaxSize()
-                                        ) {
-                                                items(filteredPokemons, key = { it.name }) { pokemon
-                                                        ->
-                                                        AvatarPokemonCard(
-                                                                name = pokemon.name,
-                                                                spriteUrl = pokemon.getSpriteUrl(),
-                                                                onClick = { onSelect(pokemon.name) }
-                                                        )
-                                                }
-                                        }
-                                }
+                if (isLoadingList && filteredPokemons.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) { CircularProgressIndicator() }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredPokemons, key = { it.name }) { pokemon
+                            ->
+                            AvatarPokemonCard(
+                                name = pokemon.name,
+                                spriteUrl = pokemon.getSpriteUrl(),
+                                onClick = { onSelect(pokemon.name) }
+                            )
                         }
+                    }
                 }
+            }
         }
+    }
 }
 
 @Composable
 fun AvatarPokemonCard(name: String, spriteUrl: String, onClick: () -> Unit) {
-        Card(
-                modifier = Modifier.fillMaxWidth().clickable { onClick() },
-                colors =
-                        CardDefaults.cardColors(
-                                containerColor =
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
-                        ),
-                shape = RoundedCornerShape(16.dp)
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+            ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(8.dp)
         ) {
-                Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(8.dp)
-                ) {
-                        AsyncImage(
-                                model = spriteUrl,
-                                contentDescription = name,
-                                modifier = Modifier.size(56.dp)
-                        )
-                        Text(
-                                text = name.replaceFirstChar { it.uppercase() },
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                        )
-                }
+            AsyncImage(
+                model = spriteUrl,
+                contentDescription = name,
+                modifier = Modifier.size(56.dp)
+            )
+            Text(
+                text = name.replaceFirstChar { it.uppercase() },
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Medium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
         }
+    }
 }
 
-// ═══════ CHANGE PASSWORD DIALOG ═══════
 
 @Composable
 fun ChangePasswordDialog(
-        onDismiss: () -> Unit,
-        onConfirm: (currentPassword: String, newPassword: String, onError: (String) -> Unit) -> Unit
+    onDismiss: () -> Unit,
+    onConfirm: (currentPassword: String, newPassword: String, onError: (String) -> Unit) -> Unit
 ) {
-        var currentPassword by remember { mutableStateOf("") }
-        var newPassword by remember { mutableStateOf("") }
-        var confirmPassword by remember { mutableStateOf("") }
-        var errorMessage by remember { mutableStateOf<String?>(null) }
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-        Dialog(onDismissRequest = onDismiss) {
-                Surface(
-                        shape = RoundedCornerShape(24.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        tonalElevation = 6.dp,
-                        modifier = Modifier.fillMaxWidth().wrapContentHeight()
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surface,
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+        ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
+                AnimatedVisibility(
+                    visible = errorMessage != null,
+                    enter = slideInVertically { -it } + fadeIn(),
+                    exit = slideOutVertically { -it } + fadeOut(),
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(
+                                horizontal = 16.dp,
+                                vertical = 8.dp
+                            )
+                            .zIndex(1f)
                 ) {
-                        Box(modifier = Modifier.fillMaxWidth()) {
-                                // Notificación de error flotante arriba
-                                AnimatedVisibility(
-                                        visible = errorMessage != null,
-                                        enter = slideInVertically { -it } + fadeIn(),
-                                        exit = slideOutVertically { -it } + fadeOut(),
-                                        modifier =
-                                                Modifier.align(Alignment.TopCenter)
-                                                        .padding(
-                                                                horizontal = 16.dp,
-                                                                vertical = 8.dp
-                                                        )
-                                                        .zIndex(1f)
-                                ) {
-                                        Surface(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                color = MaterialTheme.colorScheme.errorContainer,
-                                                shape = RoundedCornerShape(12.dp),
-                                                shadowElevation = 6.dp
-                                        ) {
-                                                Row(
-                                                        modifier =
-                                                                Modifier.padding(
-                                                                        horizontal = 16.dp,
-                                                                        vertical = 12.dp
-                                                                ),
-                                                        verticalAlignment =
-                                                                Alignment.CenterVertically
-                                                ) {
-                                                        Icon(
-                                                                Icons.Default.Warning,
-                                                                contentDescription = null,
-                                                                tint =
-                                                                        MaterialTheme.colorScheme
-                                                                                .onErrorContainer,
-                                                                modifier = Modifier.size(20.dp)
-                                                        )
-                                                        Spacer(modifier = Modifier.width(10.dp))
-                                                        Text(
-                                                                text = errorMessage ?: "",
-                                                                color =
-                                                                        MaterialTheme.colorScheme
-                                                                                .onErrorContainer,
-                                                                fontSize = 13.sp,
-                                                                fontWeight = FontWeight.Medium,
-                                                                modifier = Modifier.weight(1f)
-                                                        )
-                                                }
-                                        }
-                                }
-
-                                // Contenido principal del diálogo
-                                Column(
-                                        modifier = Modifier.padding(24.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                        Text(
-                                                text = "Cambiar Contraseña",
-                                                fontWeight = FontWeight.Bold,
-                                                fontSize = 20.sp,
-                                                color = MaterialTheme.colorScheme.onSurface,
-                                                modifier = Modifier.padding(bottom = 16.dp)
-                                        )
-
-                                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                                OutlinedTextField(
-                                                        value = currentPassword,
-                                                        onValueChange = {
-                                                                currentPassword = it
-                                                                errorMessage = null
-                                                        },
-                                                        label = { Text("Contraseña actual") },
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        singleLine = true,
-                                                        shape = RoundedCornerShape(16.dp)
-                                                )
-                                                OutlinedTextField(
-                                                        value = newPassword,
-                                                        onValueChange = {
-                                                                newPassword = it
-                                                                errorMessage = null
-                                                        },
-                                                        label = { Text("Nueva contraseña") },
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        singleLine = true,
-                                                        shape = RoundedCornerShape(16.dp)
-                                                )
-                                                OutlinedTextField(
-                                                        value = confirmPassword,
-                                                        onValueChange = {
-                                                                confirmPassword = it
-                                                                errorMessage = null
-                                                        },
-                                                        label = {
-                                                                Text("Confirmar nueva contraseña")
-                                                        },
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        singleLine = true,
-                                                        shape = RoundedCornerShape(16.dp)
-                                                )
-                                        }
-
-                                        Spacer(modifier = Modifier.height(24.dp))
-
-                                        Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                horizontalArrangement = Arrangement.End
-                                        ) {
-                                                TextButton(onClick = onDismiss) { Text("Cancelar") }
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                                Button(
-                                                        onClick = {
-                                                                when {
-                                                                        currentPassword.isBlank() ->
-                                                                                errorMessage =
-                                                                                        "Introduce tu contraseña actual"
-                                                                        newPassword.length < 6 ->
-                                                                                errorMessage =
-                                                                                        "La nueva contraseña debe tener al menos 6 caracteres"
-                                                                        newPassword !=
-                                                                                confirmPassword ->
-                                                                                errorMessage =
-                                                                                        "Las contraseñas no coinciden"
-                                                                        else -> {
-                                                                                // Validar las
-                                                                                // contraseñas
-                                                                                // reales con
-                                                                                // Firebase a través
-                                                                                // del callback
-                                                                                onConfirm(
-                                                                                        currentPassword,
-                                                                                        newPassword,
-                                                                                        { errorMsg
-                                                                                                ->
-                                                                                                errorMessage =
-                                                                                                        errorMsg
-                                                                                        }
-                                                                                )
-                                                                        }
-                                                                }
-                                                        }
-                                                ) { Text("Cambiar") }
-                                        }
-                                }
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        shape = RoundedCornerShape(12.dp),
+                        shadowElevation = 6.dp
+                    ) {
+                        Row(
+                            modifier =
+                                Modifier.padding(
+                                    horizontal = 16.dp,
+                                    vertical = 12.dp
+                                ),
+                            verticalAlignment =
+                                Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Warning,
+                                contentDescription = null,
+                                tint =
+                                    MaterialTheme.colorScheme
+                                        .onErrorContainer,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = errorMessage ?: "",
+                                color =
+                                    MaterialTheme.colorScheme
+                                        .onErrorContainer,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.weight(1f)
+                            )
                         }
+                    }
                 }
+
+                // Contenido principal del diálogo
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Cambiar Contraseña",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 20.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.padding(bottom = 16.dp)
+                    )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        OutlinedTextField(
+                            value = currentPassword,
+                            onValueChange = {
+                                currentPassword = it
+                                errorMessage = null
+                            },
+                            label = { Text("Contraseña actual") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        OutlinedTextField(
+                            value = newPassword,
+                            onValueChange = {
+                                newPassword = it
+                                errorMessage = null
+                            },
+                            label = { Text("Nueva contraseña") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        OutlinedTextField(
+                            value = confirmPassword,
+                            onValueChange = {
+                                confirmPassword = it
+                                errorMessage = null
+                            },
+                            label = {
+                                Text("Confirmar nueva contraseña")
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = onDismiss) { Text("Cancelar") }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Button(
+                            onClick = {
+                                when {
+                                    currentPassword.isBlank() ->
+                                        errorMessage =
+                                            "Introduce tu contraseña actual"
+
+                                    newPassword.length < 6 ->
+                                        errorMessage =
+                                            "La nueva contraseña debe tener al menos 6 caracteres"
+
+                                    newPassword !=
+                                            confirmPassword ->
+                                        errorMessage =
+                                            "Las contraseñas no coinciden"
+
+                                    else -> {
+                                        onConfirm(
+                                            currentPassword,
+                                            newPassword,
+                                            { errorMsg
+                                                ->
+                                                errorMessage =
+                                                    errorMsg
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        ) { Text("Cambiar") }
+                    }
+                }
+            }
         }
+    }
 }
 
-// ═══════ COMPONENTES ═══════
 
 @Composable
 fun SectionHeader(title: String, modifier: Modifier = Modifier) {
-        Text(
-                text = title,
-                fontWeight = FontWeight.ExtraBold,
-                fontSize = 20.sp,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = modifier.fillMaxWidth()
-        )
+    Text(
+        text = title,
+        fontWeight = FontWeight.ExtraBold,
+        fontSize = 20.sp,
+        color = MaterialTheme.colorScheme.onBackground,
+        modifier = modifier.fillMaxWidth()
+    )
 }
 
 @Composable
 fun EmptyStateCard(message: String, modifier: Modifier = Modifier) {
-        Card(
-                modifier = modifier.fillMaxWidth(),
-                colors =
-                        CardDefaults.cardColors(
-                                containerColor =
-                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        ),
-                shape = RoundedCornerShape(16.dp)
-        ) {
-                Text(
-                        text = message,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp,
-                        modifier = Modifier.padding(20.dp).fillMaxWidth(),
-                        textAlign = TextAlign.Center
-                )
-        }
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+            ),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp,
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxWidth(),
+            textAlign = TextAlign.Center
+        )
+    }
 }
 
 @Composable
 fun GameStatCard(gameId: String) {
-        val displayName =
-                remember(gameId) {
-                        gameId.replace("-", " ").split(" ").joinToString(" ") {
-                                it.replaceFirstChar { char -> char.uppercase() }
-                        }
-                }
-
-        ElevatedCard(
-                modifier = Modifier.width(110.dp),
-                shape = RoundedCornerShape(4.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-                colors =
-                        CardDefaults.elevatedCardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
-                        )
-        ) {
-                SubcomposeAsyncImage(
-                        model =
-                                ImageRequest.Builder(LocalContext.current)
-                                        .data(GameRepository.getCover(gameId))
-                                        .crossfade(true)
-                                        .build(),
-                        contentDescription = "Portada de $displayName",
-                        contentScale = ContentScale.Crop,
-                        modifier =
-                                Modifier.fillMaxWidth()
-                                        .height(140.dp)
-                                        .clip(RoundedCornerShape(4.dp)),
-                        loading = {
-                                Box(
-                                        modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center
-                                ) {
-                                        CircularProgressIndicator(
-                                                modifier = Modifier.size(20.dp),
-                                                strokeWidth = 2.dp,
-                                                color = MaterialTheme.colorScheme.primary
-                                        )
-                                }
-                        }
-                )
+    val displayName =
+        remember(gameId) {
+            gameId.replace("-", " ").split(" ").joinToString(" ") {
+                it.replaceFirstChar { char -> char.uppercase() }
+            }
         }
+
+    ElevatedCard(
+        modifier = Modifier.width(110.dp),
+        shape = RoundedCornerShape(4.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+    ) {
+        SubcomposeAsyncImage(
+            model =
+                ImageRequest.Builder(LocalContext.current)
+                    .data(GameRepository.getCover(gameId))
+                    .crossfade(true)
+                    .build(),
+            contentDescription = "Portada de $displayName",
+            contentScale = ContentScale.Crop,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(140.dp)
+                    .clip(RoundedCornerShape(4.dp)),
+            loading = {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        )
+    }
 }
 
 @Composable
 fun PokemonStatCard(pokemon: PokemonStat) {
-        ElevatedCard(
-                modifier = Modifier.width(120.dp),
-                shape = RoundedCornerShape(20.dp),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
-                colors =
-                        CardDefaults.elevatedCardColors(
-                                containerColor = MaterialTheme.colorScheme.surface
+    ElevatedCard(
+        modifier = Modifier.width(120.dp),
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+    ) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                SubcomposeAsyncImage(
+                    model =
+                        ImageRequest.Builder(LocalContext.current)
+                            .data(
+                                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png"
+                            )
+                            .crossfade(true)
+                            .build(),
+                    contentDescription = pokemon.name,
+                    modifier = Modifier.size(72.dp),
+                    loading = {
+                        CircularProgressIndicator(
+                            modifier = Modifier.padding(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.secondary
                         )
-        ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
-                        Column(
-                                modifier = Modifier.fillMaxWidth().padding(12.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                                // Artwork oficial HD
-                                SubcomposeAsyncImage(
-                                        model =
-                                                ImageRequest.Builder(LocalContext.current)
-                                                        .data(
-                                                                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png"
-                                                        )
-                                                        .crossfade(true)
-                                                        .build(),
-                                        contentDescription = pokemon.name,
-                                        modifier = Modifier.size(72.dp),
-                                        loading = {
-                                                CircularProgressIndicator(
-                                                        modifier = Modifier.padding(20.dp),
-                                                        strokeWidth = 2.dp,
-                                                        color = MaterialTheme.colorScheme.secondary
-                                                )
-                                        },
-                                        error = {
-                                                AsyncImage(
-                                                        model =
-                                                                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png",
-                                                        contentDescription = pokemon.name,
-                                                        modifier = Modifier.size(72.dp)
-                                                )
-                                        }
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                        text = pokemon.name.replaceFirstChar { it.uppercase() },
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 13.sp,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        color = MaterialTheme.colorScheme.onSurface
-                                )
-                        }
+                    },
+                    error = {
+                        AsyncImage(
+                            model =
+                                "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png",
+                            contentDescription = pokemon.name,
+                            modifier = Modifier.size(72.dp)
+                        )
+                    }
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = pokemon.name.replaceFirstChar { it.uppercase() },
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
-                        // Badge con el número arriba a la derecha
-                        Box(
-                                modifier =
-                                        Modifier.align(Alignment.TopEnd)
-                                                .padding(6.dp)
-                                                .size(24.dp)
-                                                .background(
-                                                        MaterialTheme.colorScheme.primary,
-                                                        CircleShape
-                                                ),
-                                contentAlignment = Alignment.Center
-                        ) {
-                                Text(
-                                        text = "${pokemon.count}",
-                                        color = Color.White,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Black
-                                )
-                        }
-                }
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(6.dp)
+                        .size(24.dp)
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                            CircleShape
+                        ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "${pokemon.count}",
+                    color = Color.White,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Black
+                )
+            }
         }
+    }
 }

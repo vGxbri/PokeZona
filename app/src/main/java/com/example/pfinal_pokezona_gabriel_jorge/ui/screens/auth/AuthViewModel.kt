@@ -1,3 +1,5 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.auth
 
 import android.util.Log
@@ -31,7 +33,7 @@ class AuthViewModel : ViewModel() {
         checkUserSession()
     }
 
-    // Comprobar si ya hay una sesión iniciada
+    // Comprobamos si ya hay una sesión iniciada
     fun checkUserSession() {
         val user = auth.currentUser
         if (user != null) {
@@ -41,13 +43,12 @@ class AuthViewModel : ViewModel() {
 
     // Cerrar sesión
     fun signOut(context: Context) {
-        // 1. Cerramos sesión en Firebase
+        // Cerramos sesión en Firebase
         auth.signOut()
 
-        // 2. Cerramos sesión en el cliente de Google del móvil
+        // Cerramos sesión en el cliente de Google del móvil
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN).build()
         GoogleSignIn.getClient(context, gso).signOut().addOnCompleteListener {
-            // 3. Cuando termine de borrar la memoria de Google, volvemos a la pantalla de Login
             _authState.value = AuthState.Idle
         }
     }
@@ -63,8 +64,8 @@ class AuthViewModel : ViewModel() {
 
                 if (uid != null) {
                     Log.d(
-                            "AuthViewModel",
-                            "Auth exitoso, UID: $uid. Intentando guardar en Firestore..."
+                        "AuthViewModel",
+                        "Auth exitoso, UID: $uid. Intentando guardar en Firestore..."
                     )
 
                     try {
@@ -73,8 +74,8 @@ class AuthViewModel : ViewModel() {
                         Log.d("AuthViewModel", "Firestore guardado exitosamente")
                     } catch (firestoreError: Exception) {
                         Log.e(
-                                "AuthViewModel",
-                                "Error al guardar en Firestore (continuando...): ${firestoreError.message}"
+                            "AuthViewModel",
+                            "Error al guardar en Firestore (continuando...): ${firestoreError.message}"
                         )
                     }
 
@@ -117,36 +118,36 @@ class AuthViewModel : ViewModel() {
             Log.d("AuthViewModel", "Iniciando sesión con Google")
             try {
                 val credential =
-                        com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
+                    com.google.firebase.auth.GoogleAuthProvider.getCredential(idToken, null)
                 val result = auth.signInWithCredential(credential).await()
                 val uid = result.user?.uid
 
                 if (uid != null) {
                     Log.d(
-                            "AuthViewModel",
-                            "Google Auth exitoso, UID: $uid. Intentando actualizar Firestore..."
+                        "AuthViewModel",
+                        "Google Auth exitoso, UID: $uid. Intentando actualizar Firestore..."
                     )
 
                     try {
                         val user = result.user
                         val userMap =
-                                hashMapOf(
-                                        "nombre" to (user?.displayName ?: "Google User"),
-                                        "correo" to (user?.email ?: "")
-                                )
+                            hashMapOf(
+                                "nombre" to (user?.displayName ?: "Google User"),
+                                "correo" to (user?.email ?: "")
+                            )
                         db.collection("usuarios").document(uid).set(userMap).await()
                         Log.d("AuthViewModel", "Firestore actualizado")
                     } catch (firestoreError: Exception) {
                         Log.e(
-                                "AuthViewModel",
-                                "Error al actualizar Firestore (continuando...): ${firestoreError.message}"
+                            "AuthViewModel",
+                            "Error al actualizar Firestore (continuando...): ${firestoreError.message}"
                         )
                     }
 
                     _authState.value = AuthState.Success(uid)
                 } else {
                     _authState.value =
-                            AuthState.Error("No se pudo obtener el ID de usuario de Google")
+                        AuthState.Error("No se pudo obtener el ID de usuario de Google")
                 }
             } catch (e: Exception) {
                 Log.e("AuthViewModel", "Error en Google Login: ${e.message}", e)

@@ -1,5 +1,8 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge.data.repository
 
+// Enlaces a las imagenes de todos los juegos
 object GameRepository {
     private val gameCovers = mapOf(
         "red" to "https://static.wikia.nocookie.net/espokemon/images/6/6b/Car%C3%A1tula_Pok%C3%A9mon_Rojo_%28Jap%C3%B3n%29.png/revision/latest?cb=20151013131441",
@@ -43,6 +46,7 @@ object GameRepository {
     )
 
     fun getCover(gameName: String): String {
-        return gameCovers[gameName] ?: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
+        return gameCovers[gameName]
+            ?: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
     }
 }

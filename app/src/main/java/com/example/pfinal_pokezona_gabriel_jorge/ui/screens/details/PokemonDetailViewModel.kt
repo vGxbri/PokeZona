@@ -1,3 +1,5 @@
+//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.details
 
 import androidx.lifecycle.ViewModel
@@ -11,7 +13,6 @@ import kotlinx.coroutines.launch
 
 class PokemonDetailViewModel : ViewModel() {
 
-    // Guardará toda la ficha del Pokémon
     private val _pokemonDetail = MutableStateFlow<PokemonDetailResponse?>(null)
     val pokemonDetail: StateFlow<PokemonDetailResponse?> = _pokemonDetail.asStateFlow()
 
@@ -21,22 +22,20 @@ class PokemonDetailViewModel : ViewModel() {
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    // Función que llamaremos desde la pantalla pasándole el ID o nombre
     fun fetchPokemonDetail(pokemonName: String) {
         viewModelScope.launch {
             try {
                 _isLoading.value = true
-                // Convertimos el nombre a minúsculas porque la API es estricta con eso
                 val lowerName = pokemonName.lowercase()
                 val response = RetrofitInstance.api.getPokemonDetail(lowerName)
                 _pokemonDetail.value = response
 
                 val speciesResponse = RetrofitInstance.api.getPokemonSpecies(lowerName)
                 val spanishEntry =
-                        speciesResponse.flavorTextEntries.firstOrNull { it.language.name == "es" }
+                    speciesResponse.flavorTextEntries.firstOrNull { it.language.name == "es" }
                 val cleanText =
-                        spanishEntry?.flavorText?.replace(Regex("""[\n\r\f]"""), " ")
-                                ?: "Descripción no disponible en español."
+                    spanishEntry?.flavorText?.replace(Regex("""[\n\r\f]"""), " ")
+                        ?: "Descripción no disponible en español."
                 _pokemonDescription.value = cleanText
             } catch (e: Exception) {
                 e.printStackTrace()
