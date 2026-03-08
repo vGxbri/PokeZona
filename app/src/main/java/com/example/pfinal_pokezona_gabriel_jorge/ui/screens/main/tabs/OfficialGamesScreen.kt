@@ -1,4 +1,4 @@
-//Gabriel Almarcha Martínez y Jorge Maqueda Miguel
+// Gabriel Almarcha Martínez y Jorge Maqueda Miguel
 
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.pfinal_pokezona_gabriel_jorge.R
 import com.example.pfinal_pokezona_gabriel_jorge.data.repository.GameRepository
 
 @Composable
@@ -50,81 +52,61 @@ fun OfficialGamesScreen(onGameClick: (String) -> Unit, viewModel: GamesViewModel
         }
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .padding(horizontal = 16.dp)) {
+    Column(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp)) {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Juegos Oficiales",
-            style =
-                MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.ExtraBold
-                ),
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 16.dp)
+                text = stringResource(R.string.official_games),
+                style =
+                        MaterialTheme.typography.headlineLarge.copy(
+                                fontWeight = FontWeight.ExtraBold
+                        ),
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 16.dp)
         )
 
         if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) { CircularProgressIndicator(color = MaterialTheme.colorScheme.primary) }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+            }
         } else {
             val completedGames = games.filter { completedGamesIds.contains(it.name) }
             val pendingGames = games.filter { !completedGamesIds.contains(it.name) }
 
             LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalItemSpacing = 16.dp,
-                contentPadding = PaddingValues(bottom = 140.dp)
+                    columns = StaggeredGridCells.Fixed(2),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalItemSpacing = 16.dp,
+                    contentPadding = PaddingValues(bottom = 140.dp)
             ) {
                 // Juegos completados
                 if (completedGames.isNotEmpty()) {
                     item(span = StaggeredGridItemSpan.FullLine) {
                         Column {
                             ExpandableSectionHeader(
-                                title = "Juegos Completados",
-                                count = completedGames.size,
-                                isExpanded = completedExpanded,
-                                onToggle = {
-                                    completedExpanded =
-                                        !completedExpanded
-                                },
-                                icon = Icons.Default.CheckCircle,
-                                accentColor =
-                                    MaterialTheme.colorScheme
-                                        .primary
+                                    title = stringResource(R.string.completed_games),
+                                    count = completedGames.size,
+                                    isExpanded = completedExpanded,
+                                    onToggle = { completedExpanded = !completedExpanded },
+                                    icon = Icons.Default.CheckCircle,
+                                    accentColor = MaterialTheme.colorScheme.primary
                             )
                             HorizontalDivider(
-                                modifier =
-                                    Modifier.padding(
-                                        top = 4.dp,
-                                        bottom = 8.dp
-                                    ),
-                                color =
-                                    MaterialTheme.colorScheme
-                                        .onBackground.copy(
-                                            alpha = 0.2f
-                                        )
+                                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+                                    color =
+                                            MaterialTheme.colorScheme.onBackground.copy(
+                                                    alpha = 0.2f
+                                            )
                             )
                         }
                     }
-                    items(
-                        items = completedGames,
-                        key = { game -> "completed_${game.name}" }
-                    ) { game ->
+                    items(items = completedGames, key = { game -> "completed_${game.name}" }) { game
+                        ->
                         AnimatedVisibility(
-                            visible = completedExpanded,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically()
-                        ) {
-                            GameCard(
-                                gameName = game.name,
-                                onClick = { onGameClick(game.name) }
-                            )
-                        }
+                                visible = completedExpanded,
+                                enter = fadeIn() + expandVertically(),
+                                exit = fadeOut() + shrinkVertically()
+                        ) { GameCard(gameName = game.name, onClick = { onGameClick(game.name) }) }
                     }
                 }
 
@@ -132,41 +114,25 @@ fun OfficialGamesScreen(onGameClick: (String) -> Unit, viewModel: GamesViewModel
                 item(span = StaggeredGridItemSpan.FullLine) {
                     Column {
                         ExpandableSectionHeader(
-                            title = "Todos los Juegos",
-                            count = pendingGames.size,
-                            isExpanded = allGamesExpanded,
-                            onToggle = {
-                                allGamesExpanded = !allGamesExpanded
-                            },
-                            icon = Icons.Default.SportsEsports,
-                            accentColor =
-                                MaterialTheme.colorScheme.secondary
+                                title = stringResource(R.string.all_games),
+                                count = pendingGames.size,
+                                isExpanded = allGamesExpanded,
+                                onToggle = { allGamesExpanded = !allGamesExpanded },
+                                icon = Icons.Default.SportsEsports,
+                                accentColor = MaterialTheme.colorScheme.secondary
                         )
                         HorizontalDivider(
-                            modifier =
-                                Modifier.padding(
-                                    top = 4.dp,
-                                    bottom = 8.dp
-                                ),
-                            color =
-                                MaterialTheme.colorScheme
-                                    .onBackground.copy(
-                                        alpha = 0.2f
-                                    )
+                                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
                         )
                     }
                 }
                 items(items = pendingGames, key = { game -> "all_${game.name}" }) { game ->
                     AnimatedVisibility(
-                        visible = allGamesExpanded,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically()
-                    ) {
-                        GameCard(
-                            gameName = game.name,
-                            onClick = { onGameClick(game.name) }
-                        )
-                    }
+                            visible = allGamesExpanded,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically()
+                    ) { GameCard(gameName = game.name, onClick = { onGameClick(game.name) }) }
                 }
             }
         }
@@ -175,79 +141,66 @@ fun OfficialGamesScreen(onGameClick: (String) -> Unit, viewModel: GamesViewModel
 
 @Composable
 fun ExpandableSectionHeader(
-    title: String,
-    count: Int,
-    isExpanded: Boolean,
-    onToggle: () -> Unit,
-    icon: ImageVector,
-    accentColor: androidx.compose.ui.graphics.Color
+        title: String,
+        count: Int,
+        isExpanded: Boolean,
+        onToggle: () -> Unit,
+        icon: ImageVector,
+        accentColor: androidx.compose.ui.graphics.Color
 ) {
     val rotationAngle by
-    animateFloatAsState(
-        targetValue = if (isExpanded) 180f else 0f,
-        animationSpec = tween(durationMillis = 300),
-        label = "rotation"
-    )
+            animateFloatAsState(
+                    targetValue = if (isExpanded) 180f else 0f,
+                    animationSpec = tween(durationMillis = 300),
+                    label = "rotation"
+            )
 
     Surface(
-        onClick = onToggle,
-        color = androidx.compose.ui.graphics.Color.Transparent,
-        shape = RoundedCornerShape(16.dp)
+            onClick = onToggle,
+            color = androidx.compose.ui.graphics.Color.Transparent,
+            shape = RoundedCornerShape(16.dp)
     ) {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp, horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
         ) {
             Box(modifier = Modifier.size(36.dp), contentAlignment = Alignment.Center) {
                 Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(24.dp)
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                text = title,
-                style =
-                    MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f)
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f)
             )
             Surface(
-                shape = RoundedCornerShape(20.dp),
-                color = androidx.compose.ui.graphics.Color.Transparent
+                    shape = RoundedCornerShape(20.dp),
+                    color = androidx.compose.ui.graphics.Color.Transparent
             ) {
                 Text(
-                    text = "$count",
-                    modifier =
-                        Modifier.padding(
-                            horizontal = 8.dp,
-                            vertical = 4.dp
-                        ),
-                    style =
-                        MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                    color = accentColor
+                        text = "$count",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style =
+                                MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold
+                                ),
+                        color = accentColor
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
             Icon(
-                imageVector = Icons.Default.KeyboardArrowDown,
-                contentDescription = if (isExpanded) "Colapsar" else "Expandir",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier =
-                    Modifier
-                        .size(24.dp)
-                        .graphicsLayer {
-                            rotationZ = rotationAngle
-                        }
+                    imageVector = Icons.Default.KeyboardArrowDown,
+                    contentDescription =
+                            if (isExpanded) stringResource(R.string.collapse)
+                            else stringResource(R.string.expand),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(24.dp).graphicsLayer { rotationZ = rotationAngle }
             )
         }
     }
@@ -256,53 +209,48 @@ fun ExpandableSectionHeader(
 @Composable
 fun GameCard(gameName: String, onClick: () -> Unit) {
     val displayName =
-        remember(gameName) {
-            gameName.replace("-", " ").split(" ").joinToString(" ") {
-                it.replaceFirstChar { char -> char.uppercase() }
+            remember(gameName) {
+                gameName.replace("-", " ").split(" ").joinToString(" ") {
+                    it.replaceFirstChar { char -> char.uppercase() }
+                }
             }
-        }
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() },
-        shape =
-            RoundedCornerShape(
-                topStart = 4.dp,
-                topEnd = 4.dp,
-                bottomEnd = 12.dp,
-                bottomStart = 12.dp
-            ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors =
-            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
+            modifier = Modifier.fillMaxWidth().clickable { onClick() },
+            shape =
+                    RoundedCornerShape(
+                            topStart = 4.dp,
+                            topEnd = 4.dp,
+                            bottomEnd = 12.dp,
+                            bottomStart = 12.dp
+                    ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f))
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
         ) {
             AsyncImage(
-                model =
-                    ImageRequest.Builder(LocalContext.current)
-                        .data(GameRepository.getCover(gameName))
-                        .crossfade(true)
-                        .size(coil.size.Size.ORIGINAL)
-                        .build(),
-                contentDescription = "Portada de $displayName",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxWidth()
+                    model =
+                            ImageRequest.Builder(LocalContext.current)
+                                    .data(GameRepository.getCover(gameName))
+                                    .crossfade(true)
+                                    .size(coil.size.Size.ORIGINAL)
+                                    .build(),
+                    contentDescription = stringResource(R.string.cover_of, displayName),
+                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.fillMaxWidth()
             )
 
             Text(
-                text = displayName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp,
-                textAlign = TextAlign.Center,
-                color =
-                    MaterialTheme.colorScheme
-                        .onSurface, // Color del texto dinámico
-                modifier = Modifier.padding(12.dp)
+                    text = displayName,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onSurface, // Color del texto dinámico
+                    modifier = Modifier.padding(12.dp)
             )
         }
     }
