@@ -44,6 +44,7 @@ import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.request.ImageRequest
 import com.example.pfinal_pokezona_gabriel_jorge.data.model.PokemonResult
+import com.example.pfinal_pokezona_gabriel_jorge.data.model.translateTypeToSpanish
 
 @Composable
 fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel = viewModel()) {
@@ -471,9 +472,7 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                                                                 Text(
                                                                         text =
                                                                                 selectedType
-                                                                                        ?.replaceFirstChar {
-                                                                                                it.uppercase()
-                                                                                        }
+                                                                                        ?.translateTypeToSpanish()
                                                                                         ?: "Tipo",
                                                                         style =
                                                                                 MaterialTheme
@@ -581,10 +580,7 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                                                                 DropdownMenuItem(
                                                                         text = {
                                                                                 Text(
-                                                                                        type
-                                                                                                .replaceFirstChar {
-                                                                                                        it.uppercase()
-                                                                                                },
+                                                                                        type.translateTypeToSpanish(),
                                                                                         fontWeight =
                                                                                                 if (selectedType ==
                                                                                                                 type
