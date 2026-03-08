@@ -173,7 +173,7 @@ fun RegisterScreen(
                                         OutlinedTextField(
                                                 value = name,
                                                 onValueChange = { name = it },
-                                                label = { Text("Nombre Completo") },
+                                                label = { Text("Nombre de Usuario") },
                                                 leadingIcon = {
                                                         Icon(
                                                                 Icons.Default.Person,

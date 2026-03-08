@@ -109,7 +109,7 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                        text = "Pokédex Nacional",
+                        text = "Pokédex",
                         style =
                                 MaterialTheme.typography.headlineLarge.copy(
                                         fontWeight = FontWeight.ExtraBold
@@ -742,7 +742,10 @@ fun PokedexScreen(onPokemonClick: (String) -> Unit, viewModel: PokedexViewModel 
                                         ) {
                                                 PokemonCard(
                                                         pokemon = pokemon,
-                                                        isFavorite = false,
+                                                        isFavorite =
+                                                                favoritePokemons.contains(
+                                                                        pokemon.name
+                                                                ),
                                                         onFavoriteClick = {
                                                                 viewModel.toggleFavorite(
                                                                         pokemon.name

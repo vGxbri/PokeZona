@@ -24,6 +24,9 @@ class ProfileViewModel : ViewModel() {
 
     val userEmail = auth.currentUser?.email ?: "Entrenador"
 
+    private val _userName = MutableStateFlow("Entrenador")
+    val userName: StateFlow<String> = _userName.asStateFlow()
+
     // Detectar si la cuenta es de Google (no tiene contraseña)
     val isGoogleAccount: Boolean =
             auth.currentUser?.providerData?.any { it.providerId == "google.com" } == true
@@ -83,6 +86,20 @@ class ProfileViewModel : ViewModel() {
                             _avatarPokemonId.value = detail.id
                         } catch (_: Exception) {}
                     }
+                }
+
+                try {
+                    val usuariosDoc = db.collection("usuarios").document(userId).get().await()
+                    if (usuariosDoc.exists()) {
+                        val nombre = usuariosDoc.getString("nombre")
+                        if (!nombre.isNullOrBlank()) {
+                            _userName.value = nombre
+                        }
+                    } else if (!auth.currentUser?.displayName.isNullOrBlank()) {
+                        _userName.value = auth.currentUser?.displayName ?: "Entrenador"
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
 
                 val gamesList =
@@ -218,7 +235,12 @@ class ProfileViewModel : ViewModel() {
 
     // ═══════ Password Reset ═══════
 
-    fun changePassword(currentPassword: String, newPassword: String) {
+    fun changePassword(
+            currentPassword: String,
+            newPassword: String,
+            onSuccess: () -> Unit,
+            onError: (String) -> Unit
+    ) {
         val user = auth.currentUser ?: return
         val email = user.email ?: return
         val credential = EmailAuthProvider.getCredential(email, currentPassword)
@@ -228,14 +250,13 @@ class ProfileViewModel : ViewModel() {
                     user.updatePassword(newPassword)
                             .addOnSuccessListener {
                                 _passwordResetResult.value = "Contraseña actualizada correctamente."
+                                onSuccess()
                             }
                             .addOnFailureListener { e ->
-                                _passwordResetResult.value = "Error al actualizar: ${e.message}"
+                                onError(e.message ?: "Error al actualizar la contraseña")
                             }
                 }
-                .addOnFailureListener { e ->
-                    _passwordResetResult.value = "La contraseña actual es incorrecta."
-                }
+                .addOnFailureListener { e -> onError("La contraseña actual es incorrecta.") }
     }
 
     fun clearPasswordResetResult() {

@@ -1,5 +1,10 @@
 package com.example.pfinal_pokezona_gabriel_jorge.ui.screens.main.tabs
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.LockReset
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
@@ -43,6 +50,7 @@ import com.example.pfinal_pokezona_gabriel_jorge.data.repository.GameRepository
 @Composable
 fun ProfileScreen(onLogoutClick: () -> Unit, viewModel: ProfileViewModel = viewModel()) {
         val avatarPokemonId by viewModel.avatarPokemonId.collectAsState()
+        val userName by viewModel.userName.collectAsState()
         val topGames by viewModel.topGames.collectAsState()
         val topPokemons by viewModel.topPokemons.collectAsState()
         val isLoading by viewModel.isLoading.collectAsState()
@@ -97,12 +105,12 @@ fun ProfileScreen(onLogoutClick: () -> Unit, viewModel: ProfileViewModel = viewM
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Text(
-                                text = "Licencia de Entrenador",
+                                text = "Datos de Entrenador",
                                 style =
                                         MaterialTheme.typography.headlineLarge.copy(
                                                 fontWeight = FontWeight.ExtraBold
                                         ),
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                         )
 
@@ -205,7 +213,7 @@ fun ProfileScreen(onLogoutClick: () -> Unit, viewModel: ProfileViewModel = viewM
                                         Spacer(modifier = Modifier.height(16.dp))
 
                                         Text(
-                                                text = "Entrenador",
+                                                text = userName,
                                                 fontSize = 24.sp,
                                                 fontWeight = FontWeight.Black,
                                                 color = MaterialTheme.colorScheme.onSurface
@@ -356,9 +364,13 @@ fun ProfileScreen(onLogoutClick: () -> Unit, viewModel: ProfileViewModel = viewM
         if (showChangePasswordDialog) {
                 ChangePasswordDialog(
                         onDismiss = { showChangePasswordDialog = false },
-                        onConfirm = { currentPw, newPw ->
-                                viewModel.changePassword(currentPw, newPw)
-                                showChangePasswordDialog = false
+                        onConfirm = { currentPw, newPw, onError ->
+                                viewModel.changePassword(
+                                        currentPassword = currentPw,
+                                        newPassword = newPw,
+                                        onSuccess = { showChangePasswordDialog = false },
+                                        onError = { errorMsg -> onError(errorMsg) }
+                                )
                         }
                 )
         }
@@ -508,80 +520,167 @@ fun AvatarPokemonCard(name: String, spriteUrl: String, onClick: () -> Unit) {
 @Composable
 fun ChangePasswordDialog(
         onDismiss: () -> Unit,
-        onConfirm: (currentPassword: String, newPassword: String) -> Unit
+        onConfirm: (currentPassword: String, newPassword: String, onError: (String) -> Unit) -> Unit
 ) {
         var currentPassword by remember { mutableStateOf("") }
         var newPassword by remember { mutableStateOf("") }
         var confirmPassword by remember { mutableStateOf("") }
         var errorMessage by remember { mutableStateOf<String?>(null) }
 
-        AlertDialog(
-                onDismissRequest = onDismiss,
-                title = { Text("Cambiar Contraseña", fontWeight = FontWeight.Bold) },
-                text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                OutlinedTextField(
-                                        value = currentPassword,
-                                        onValueChange = {
-                                                currentPassword = it
-                                                errorMessage = null
-                                        },
-                                        label = { Text("Contraseña actual") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        shape = RoundedCornerShape(16.dp)
-                                )
-                                OutlinedTextField(
-                                        value = newPassword,
-                                        onValueChange = {
-                                                newPassword = it
-                                                errorMessage = null
-                                        },
-                                        label = { Text("Nueva contraseña") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        shape = RoundedCornerShape(16.dp)
-                                )
-                                OutlinedTextField(
-                                        value = confirmPassword,
-                                        onValueChange = {
-                                                confirmPassword = it
-                                                errorMessage = null
-                                        },
-                                        label = { Text("Confirmar nueva contraseña") },
-                                        modifier = Modifier.fillMaxWidth(),
-                                        singleLine = true,
-                                        shape = RoundedCornerShape(16.dp)
-                                )
-                                if (errorMessage != null) {
-                                        Text(
-                                                text = errorMessage!!,
-                                                color = MaterialTheme.colorScheme.error,
-                                                fontSize = 13.sp
-                                        )
-                                }
-                        }
-                },
-                confirmButton = {
-                        Button(
-                                onClick = {
-                                        when {
-                                                currentPassword.isBlank() ->
-                                                        errorMessage =
-                                                                "Introduce tu contraseña actual"
-                                                newPassword.length < 6 ->
-                                                        errorMessage =
-                                                                "La nueva contraseña debe tener al menos 6 caracteres"
-                                                newPassword != confirmPassword ->
-                                                        errorMessage =
-                                                                "Las contraseñas no coinciden"
-                                                else -> onConfirm(currentPassword, newPassword)
+        Dialog(onDismissRequest = onDismiss) {
+                Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = MaterialTheme.colorScheme.surface,
+                        tonalElevation = 6.dp,
+                        modifier = Modifier.fillMaxWidth().wrapContentHeight()
+                ) {
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                                // Notificación de error flotante arriba
+                                AnimatedVisibility(
+                                        visible = errorMessage != null,
+                                        enter = slideInVertically { -it } + fadeIn(),
+                                        exit = slideOutVertically { -it } + fadeOut(),
+                                        modifier =
+                                                Modifier.align(Alignment.TopCenter)
+                                                        .padding(
+                                                                horizontal = 16.dp,
+                                                                vertical = 8.dp
+                                                        )
+                                                        .zIndex(1f)
+                                ) {
+                                        Surface(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                color = MaterialTheme.colorScheme.errorContainer,
+                                                shape = RoundedCornerShape(12.dp),
+                                                shadowElevation = 6.dp
+                                        ) {
+                                                Row(
+                                                        modifier =
+                                                                Modifier.padding(
+                                                                        horizontal = 16.dp,
+                                                                        vertical = 12.dp
+                                                                ),
+                                                        verticalAlignment =
+                                                                Alignment.CenterVertically
+                                                ) {
+                                                        Icon(
+                                                                Icons.Default.Warning,
+                                                                contentDescription = null,
+                                                                tint =
+                                                                        MaterialTheme.colorScheme
+                                                                                .onErrorContainer,
+                                                                modifier = Modifier.size(20.dp)
+                                                        )
+                                                        Spacer(modifier = Modifier.width(10.dp))
+                                                        Text(
+                                                                text = errorMessage ?: "",
+                                                                color =
+                                                                        MaterialTheme.colorScheme
+                                                                                .onErrorContainer,
+                                                                fontSize = 13.sp,
+                                                                fontWeight = FontWeight.Medium,
+                                                                modifier = Modifier.weight(1f)
+                                                        )
+                                                }
                                         }
                                 }
-                        ) { Text("Cambiar") }
-                },
-                dismissButton = { TextButton(onClick = onDismiss) { Text("Cancelar") } }
-        )
+
+                                // Contenido principal del diálogo
+                                Column(
+                                        modifier = Modifier.padding(24.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                        Text(
+                                                text = "Cambiar Contraseña",
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 20.sp,
+                                                color = MaterialTheme.colorScheme.onSurface,
+                                                modifier = Modifier.padding(bottom = 16.dp)
+                                        )
+
+                                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                                OutlinedTextField(
+                                                        value = currentPassword,
+                                                        onValueChange = {
+                                                                currentPassword = it
+                                                                errorMessage = null
+                                                        },
+                                                        label = { Text("Contraseña actual") },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        singleLine = true,
+                                                        shape = RoundedCornerShape(16.dp)
+                                                )
+                                                OutlinedTextField(
+                                                        value = newPassword,
+                                                        onValueChange = {
+                                                                newPassword = it
+                                                                errorMessage = null
+                                                        },
+                                                        label = { Text("Nueva contraseña") },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        singleLine = true,
+                                                        shape = RoundedCornerShape(16.dp)
+                                                )
+                                                OutlinedTextField(
+                                                        value = confirmPassword,
+                                                        onValueChange = {
+                                                                confirmPassword = it
+                                                                errorMessage = null
+                                                        },
+                                                        label = {
+                                                                Text("Confirmar nueva contraseña")
+                                                        },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        singleLine = true,
+                                                        shape = RoundedCornerShape(16.dp)
+                                                )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(24.dp))
+
+                                        Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.End
+                                        ) {
+                                                TextButton(onClick = onDismiss) { Text("Cancelar") }
+                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Button(
+                                                        onClick = {
+                                                                when {
+                                                                        currentPassword.isBlank() ->
+                                                                                errorMessage =
+                                                                                        "Introduce tu contraseña actual"
+                                                                        newPassword.length < 6 ->
+                                                                                errorMessage =
+                                                                                        "La nueva contraseña debe tener al menos 6 caracteres"
+                                                                        newPassword !=
+                                                                                confirmPassword ->
+                                                                                errorMessage =
+                                                                                        "Las contraseñas no coinciden"
+                                                                        else -> {
+                                                                                // Validar las
+                                                                                // contraseñas
+                                                                                // reales con
+                                                                                // Firebase a través
+                                                                                // del callback
+                                                                                onConfirm(
+                                                                                        currentPassword,
+                                                                                        newPassword,
+                                                                                        { errorMsg
+                                                                                                ->
+                                                                                                errorMessage =
+                                                                                                        errorMsg
+                                                                                        }
+                                                                                )
+                                                                        }
+                                                                }
+                                                        }
+                                                ) { Text("Cambiar") }
+                                        }
+                                }
+                        }
+                }
+        }
 }
 
 // ═══════ COMPONENTES ═══════
